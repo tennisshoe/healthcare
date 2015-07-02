@@ -508,10 +508,8 @@ program define BuildEmploymentData
 	ren est_population population
 	ren est_employed employed
 	
-	* don't want to generate missing data points here since self employed
+	* may not want to generate missing data points here since self employed
 	* is my variable of interest
-	
-	/*
 	
 	gen panel = state_code * 1000 + county_code
 	tsset panel year
@@ -536,8 +534,6 @@ program define BuildEmploymentData
 	replace employed = round(employed)
 
 	drop panel
-	
-	*/
 	
 	rename state_code stcode
 	rename county_code cntycd
@@ -1380,8 +1376,6 @@ program define BuildCaptialData
 	* next do the non-employer version	
 	restore
 
-	* only want firms with at least 1 employee since that's our small business
-	* dataset
 	keep if n07_employer == "N"
 	count if employment_noisy > 0
 	assert(r(N) == 0)
