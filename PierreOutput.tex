@@ -24,32 +24,9 @@
 
 \begin{document}
 
-Updated measure of capital intensity to be more realistic, now we see utilities as no longer being a relatively low capital industry. Used microdata to focus on establishments with either no or 1-4 employees in MA. Note I later drop utilities from the data set because there aren't many observations in MA. 
-
-\input{resources/capital.tex}
-
-
-\pagebreak
-
-How well does establishments track firms
-http://factfinder.census.gov/faces/tableservices/jsf/pages/productview.xhtml?pid=SBO_2007_00CSA01&prodType=table
-
-How well does net establishments track gross firm creation
-http://www.census.gov/ces/dataproducts/bds/data_firm.html
-
-
-Do state diff diff on self-employment statistics, include part time self-employed
-
-Finally, we use the 2012 Econ
-omic Census Industry Series for information about the concentration of non-profits per industry. The data classifies firms by whether they are exempt from federal income tax in some service industries. We exclude the subset of industries relating to health care services.
-
-\section{Empirical Results}
-In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability an individual becomes an entrepreneur. Since we do not observe new firm creation, here we use the yearly number of net new small establishments per million people as a proxy for the probability of entrepreneurship. In some of our specifications, we measure this by county ($NewNew_{ct}$) while in others we measure rates per 2 or 4 digit NAICS industry by county ($NewNew_{cit}$). This identification strategy mixes both firm starts and firm failures, so any results speak to the impact of the health care reform both on the ability for entrepreneurs to start new businesses as well as keep existing firms afloat. Table 1 provides summary statistics for the variables of interest across the treatment and control groups used in our empirics. 
-
+Basic summary statistics. NetNew is number of net new establishments per million people. 
 
 \begin{flushleft}
-
-
 \begin{table}[H]
 	\centering
 	\begin{tabular}{|p{6cm} | r | r| r| r|r|}
@@ -61,559 +38,373 @@ In order to measure the effect of the health care reform on entrepreneurship, id
 \end{table}
 \end{flushleft}
 
-\subsection{General Impact}
+\pagebreak
 
-To test the first proposition, we apply a diff-in-diff approach with counties in Massachusetts as the control group and counties in the rest of New England as control.
+Using only yearly data on firms I have to test whether establishment counts are a good proxy for firm counts. Seems to be true
+\begin{verbatim}
+http://www.census.gov/ces/dataproducts/bds/data_firm.html
+\end{verbatim}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=.8]{resources/firm_est_MA.eps}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=.8]{resources/firm_est_US.eps}
+\end{figure}
+
+\pagebreak
+
+The same data however suggests change in establishments doesn't track establishment entry well.
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=.8]{resources/est_net_MA.eps}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=.8]{resources/est_net_US.eps}
+\end{figure}
+
+\pagebreak
+
+Here I'm looking at a diff-diff of MA against the rest of New England on a county level. My variable of interest is self employment per million people here. I don't trust the cluster by state version; I know the shock is state wide so it makes sense but the co-variance matrix is singular since I have no time variation in the treated counties. 
+
 \begin{align}
 NetNew_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
 \end{align}
 
-Here $NetNew_{ct}$ represents the number of net new small establishments created per 1,000,000 residents in year $t$ and county $c$. The model includes fixed effects for year ($\delta$) and county ($\alpha$). We calculate robust standard errors clustered on county and weigh each county by its population at the start of the treatment. Figure 5a shows the difference between the control and treatment groups over the period of interest conditional on the fixed effects. Model (1) is estimated in Table 2\footnote{Robust standard errors clustered on county used under a fixed effect model. Panel series observations weighted by 2008 population. Census county business used to determine number of establishments of 1 to 4 employees by county from 2000 to 2008 for 2 digit NAICS other than 95, 99 and 62. Establishments marked as state wide dropped due to weighting ambiguity. New England considered to be Connecticut, Maine, New Hampshire, Rhode Island, Vermont and Massachusetts. } . 
+\begin{center}
+	\centering
+	\input{resources/diff_se_pop_county_simple.tex}
+\end{center}
 
 \begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.495\textwidth}
-	    \includegraphics[width=\textwidth]{resources/state_diff}
-	    \caption{Model (1) weighted by county population and clustered by county}
+	    \includegraphics[width=\textwidth]{resources/graphpointSelf_Employment_Weighted}
+	    \caption{Weighted by county population and clustered by county}
 	\end{subfigure}
 	\begin{subfigure}[b]{0.495\textwidth}
-		  \includegraphics[width=\textwidth]{resources/state_diff_nan}
-		  \caption{Model (2) clustered by county and naics}
+		  \includegraphics[width=\textwidth]{resources/graphpointSelf_Employment_Unweighted}
+		  \caption{Clustered by county}
 	\end{subfigure}
 	\caption{Fixed effects point estimates of difference between control and treatment groups with 95\% confidence interval.}
 \end{figure}
 
+
+\pagebreak
+
+Here variable of interest is establishments without workers per million people
+
+\begin{align}
+NetNew_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
+\end{align}
+
 \begin{center}
-	\begin{table}[H]		
-		\centering
-		\input{resources/prop1.tex}	
-		\caption{Diff-in-diff estimator of health reform} 
-	\end{table}
-\end{center}
-
-
-We are unable to reject the null hypothesis that the 2008 health insurance shock had no effect on overall entrepreneurship using a general difference-in-difference approach.
-
-\subsection{Non-profit Heterogeneity}
-
-For the second proposition, our treatment group consists of 4 digit NAICS code industries where over half of all establishments were exempt from federal taxes, excluding establishments in the health care industry. This specification adds a fixed effect for industry $\gamma_i$ and restricts our observations to counties in Massachusetts. Since our observations are of industries within each county, we no longer weight our results by county. We interpret our coefficient of interest as the number of new establishments per treated industry created per million residents a result of the health care shock. 
-\begin{align}
-NewNew_{cit} = \alpha_c + \gamma_i + \delta_t + \beta \, \mathbf{1}\{\text{non-profit industry}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
-\end{align}
-
-Here $NewNew_{cit}$ represents the number of net new small establishments created per 1,000,000 residents in year $t$, county $c$ and industry $i$. The model includes fixed effects for year ($\delta$), county ($\alpha$) and industry ($\gamma$). 
-
-Model (2) leaves open the possibility of another shock happening at the same time that also differentially affected non-profit industries. The results would be invalid if for example the 2008 recession was relatively milder for non-profit firms than for for-profit firms. To control for this, we extend our approach to a triple difference model which should account for shocks that both affected Massachusetts and the rest of New England. 
-\begin{align}
-NewNew_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
-& + \beta \, \mathbf{1}\{\text{non-profit industry}\} \cdot \mathbf{1}\{\text{year > 2007}\}  \cdot \mathbf{1}\{\text{county in  MA}\} \nonumber  \\
-& + \epsilon_{ict}
-\end{align}
-
-Figure 5b shows the difference between the control and treatment groups over the period of interest conditional on the fixed effects for model (2). Our results for both specifications are presented in Table 3\footnote{Robust standard errors clustered on county and 4 digit NAICS industry used. US wide 2012 Economic Census industry data used determine 4 digit NAICS codes with over 50\% of federal tax exempt establishments. Health care related establishments and state-wide establishments dropped.}. Neither model suggests there was a significant difference between the entrepreneurial rates of non-profit and for-profit firms as a result of the shock. We interpret this as evidence that the long term tax implications of entrepreneurial subsidies are not attenuating self-employment rates. 
-\begin{center}
-	\begin{table}[H]
-		\centering
-		\input{resources/nonprofit.tex}
-		\caption{Impact of health reform on non-profit entrepreneurship}
-	\end{table}
-\end{center}
-
-\subsection{Capital Requirement Heterogeneity}
-
-For the third proposition, we can group industries with a high percentage of "no funding" firms together as a treatment group. 
-\begin{align}
-NewNew_{cit} =  \alpha_c + \gamma_i+ \delta_t + \beta \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year >= 2008}\} + \epsilon_{ict}
-\end{align}
-
-We need to pick what set of industries constitute low capital from our data set of 18 industries. Figure 8 shows the treatment effect by quantile of the treatment group. For example, the 11th quantile estimate considers the bottom 2 industries by capital requirements as the treatment group. For the rest of our analysis, we use these bottom 2 industries as the treatment group. The treatment effect is emasculated in at higher treatment cutoffs which is consistent with our theory under the assumption that idea density diminishes at higher levels of required capital. This suggests the health care act primarily affected entrepreneurs with low access to capital. 
-
-\begin{figure}[H]
 	\centering
-	\includegraphics[scale=.75]{resources/quantiles.png}
-	\caption{Treatment Effect By Quantile of Industry's Capital Requirements}
-\end{figure}
-
-
-\begin{comment}
+	\input{resources/diff_ne_pop_county_simple.tex}
+\end{center}
 
 \begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/quantiles.png}
-		\caption{Model (4)}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Weighted}
+	    \caption{Weighted by county population and clustered by county}
 	\end{subfigure}
 	\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/quantiles_ddd.png}
-		\caption{Model (5)}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Unweighted}
+		  \caption{Clustered by county}
 	\end{subfigure}
-	\caption{Treatment Effect By Quantile of Industry's Capital Requirements}
+	\caption{Fixed effects point estimates of difference between control and treatment groups with 95\% confidence interval.}
 \end{figure}
 
-\end{comment}
 
-Again, model (4) leaves open the possibility of another shock happening at the same time that also differentially affected low capital industries. We extend our approach to a triple difference model (5). 
+\pagebreak
+
+
+Here variable of interest is establishments with 1 to 4 workers per million people
+
 \begin{align}
-NewNew_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
-& + \beta \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year >= 2008}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
-& + \epsilon_{cit}
+NetNew_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
 \end{align}
 
-Figure 8b shows model (5) is consistent with our results from model (4). Figure 5b plots the different between control and treatment when we consider the three industries with the lowest capital requirements as the treated group under model (4).  
-
-The fourth proposition would modify the diff-in-diff in that we would test to see if the initial treatment period was stronger than the long term treatment, with a corresponding triple differences estimator.
-\begin{align}
-NewNew_{cit} & =  \alpha_c + \gamma_i+ \delta_t  \nonumber + \beta_{2008} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year == 2008}\} \nonumber \\
-& + \beta_{>2008} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year > 2008}\} + \epsilon_{ict} \\
-NewNew_{cit} & =  \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
-& + \beta_{2008} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year == 2008}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
-& + \beta_{>2008} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year > 2008}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
-& + \epsilon_{cit}
-\end{align}
-
-Table 4\footnote{Robust standard errors clustered on county and 2 digit NAICS industry used. US wide 2007 Survey of Small Business Owners used to determine percentage of firms within 2 digit NAICS industries that required no startup capital.} summarizes our results. All our model specifications show an increase in entrepreneurial activity for low capital industries. On average, model (5) suggests about 30 new firms per million people are created each year in the treated industries. This implies the shock had a relatively large impact; in New England other than Massachusetts on average 2 establishments per million people were lost each year in the treated industries after 2008. Model (6) and model (7) have point estimates that suggests there was a short term increase in entrepreneurial activity which supports proposition 4. However neither model can reject the two estimates being identical with 95\% confidence. 
 \begin{center}
-	\begin{table}[H]
-		\centering
-		\input{resources/main.tex}
-		\caption{Impact of health reform on low capital industries}
-	\end{table}
+	\centering
+	\input{resources/diff_em_pop_county_simple.tex}
 \end{center}
-
-\section*{Conclusion}
-Here we have provided evidence that a subsidy to entrepreneurial activity can have a measurable impact in the amount of new firms created. We use a model that describes entrepreneurship in terms of idea generation and entrepreneurial resources. We test the model's predictions against the shock created by the 2006 health reform act in Massachusetts. We find that entrepreneurs with low access to capital were most affected by the improvement in access to health care. This led to an increase in entrepreneurial activity in industry that required low levels of capital investment. The effect was magnified in its first year but persists as a long term phenomenon. 
-
-\appendix
-\section*{Appendix}
-\subsection*{Appendix A}
-
-Let $\Omega$ represent the set of all possible ideas. In each time period $t$, a potential entrepreneur $i$ makes a draw $\omega_{it} \subset \Omega$ from this set. To simplify assume each entrepreneur makes the same number of draws in each period. 
-
-Assume that ideas can be totally ordered based on each of the factors. Let $X:\Omega\to I^n \subset \mathbb{R}^n$ be a random variable where $n$ is the number of factors that can impact the decision to start a company. For example, consider an idea $\omega$ to start a software company. One of the factors required might be a software developer with an advanced knowledge of computer science. The random variable would assign a real number that represents the knowledge required to the dimension $j$ of $\mathbb{R}^n$ that represents software development skill as a factor. Another idea $\omega'$ that requires less advanced software development would be assigned a number less than the first idea. 
-$$X(\omega)^j > X(\omega')^j $$
-
-Let $r_i \in I^n$ represent the resources of the entrepreneur. To continue the example, the software entrepreneur may have access through her social network to a certain level of software developer willing to help out but not easy access to more advanced developers. An idea is executed by the entrepreneur if all required factors can be met by the entrepreneur. 
-$$r_i^j \ge X(\omega_{it})^j \; \forall j \in n$$
-
-\begin{comment}
-We call an idea \textit{unbounded} for an individual if the idea can be executed and \textit{single bounded} on dimension $k$ if
-$$\alpha_i^k = X(\omega{it})^k \wedge  \alpha_i^j > X(\omega{it})^j \; \forall j \ne k \in n$$
-\end{comment}
-
-The probability of an idea being executed by an entrepreneur with resources $r_i$ in time $t$ is therefore 
-$$Pr\left(\bigcap _{j=1}^n  r_i^j \ge X^j\right) = F_X(r)$$
-Let $F_Y$ represent the distribution of entrepreneurs with resources $r$ over the space of ideas. Then the expected number of startups generated at time $t$ is then 
-\begin{align}
-\mathbb{E}_{Y}[F_X(r)]=\int_{I^n} F_X(r) dF_Y(r)
-\end{align}
-
-Consider how a change in the distribution of resources for one factor impacts the rate of startup creation along another factor's dimension. For example, increasing access to healthcare might impact the rate of firm creation for ideas requiring large amounts of capital differently than ideas require low amounts of capital. Let $\alpha$ represent the factor being changed, $\beta$ the factor we are measuring a reaction to, and $\Gamma$ be the set of all other factors. Let $\beta_0$ be a specific resource level on $\beta$ we are interested in and $[\underline{I_\beta}, \beta_0]$ the set of all resource levels that are equal to or less than $\beta_0$. We can write the total number of startups (6) that fall within that resource level as
-\begin{align*}
-& \int_{I^n} F_X(r) dF_Y(r)\\
-= & \int_{I^n} \int_{\underline{I^n}}^{r} dF_X(s) dF_Y(r)\\
-= & \int_{I^n} \int_{s}^{\overline{I^n}}  dF_Y(r) dF_X(s) \\
-= &  \int_{I_{\Gamma}} \int_{I_{\alpha,\beta}} \int_{s}^{\overline{I^n}}  dF_Y(r)dF_{X_{\alpha,\beta}}(a,b|U)
- dF_{X_{\Gamma}}(U)\\
-= &  \int_{I_{\Gamma}} \int_{I_{\alpha,\beta}} \int_{U}^{\overline{I_\Gamma}} \int_{a,b}^{\overline{I_{\alpha,\beta}}} dF_{Y_{\alpha,\beta}}(s,t|V)dF_{Y_\Gamma}(V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{X_{\Gamma}}(U)\\
-= &  \int_{I_{\Gamma}} \int_{U}^{\overline{I_\Gamma}} \int_{I_{\alpha,\beta}} \int_{a,b}^{\overline{I_{\alpha,\beta}}} dF_{Y_{\alpha,\beta}}(s,t|V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{Y_\Gamma}(V) dF_{X_{\Gamma}}(U)\\
-= &  \int_{I_{\Gamma}} \int_{U}^{\overline{I_\Gamma}} \int_{I_{\beta}} \int_{I_{\alpha}} \int_{b}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dF_{Y_{\alpha,\beta}}(s,t|V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{Y_\Gamma}(V) dF_{X_{\Gamma}}(U)\\
-\implies S(\beta_0) = & \int_{I_{\Gamma}} \int_{U}^{\overline{I_\Gamma}} \int_{\underline{I_\beta}}^{\beta_0} \int_{I_{\alpha}} \int_{b}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dF_{Y_{\alpha,\beta}}(s,t|V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{Y_\Gamma}(V) dF_{X_{\Gamma}}(U)
-\end{align*}
-Define a function $h$ that maps the conditional distribution entrepreneurs on resource $\alpha$ and a value $\beta_0$ to the rate of new enterprise creation at $\beta_0$ conditional on $\Gamma$.
-\begin{align*}
-h(G_{Y_\alpha},\beta_0|\Gamma) = \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) = \left. \frac{\partial S (\beta_0|\Gamma)}{\partial \beta} \right|_{G_{Y_{\alpha}}=F_{Y_{\alpha}}}
-\end{align*}
-
-Finally, use first order stochastic dominance to define a partial order on the set of all distributions for $G_{Y_\alpha}$. 
-
-\textbf{Proposition 3:} 
-The function $h$ has increasing differences in $G_{Y_\alpha}$ and $-\beta_0$ if $dF_{X_{\alpha,\beta}}$ is non-increasing in $\beta$. 
-
-\textbf{Proof:}
-Let $G'_{Y_\alpha}\mathop{\ge}_{\text{FOSD}} G_{Y_\alpha}$ and $\beta_0' \ge \beta_0$. Then $h$ has increasing differences in $G_{Y_\alpha}$ and $-\beta_0$ if and only if:
-\begin{align*}
-& h(G'_{Y_\alpha},\beta_0|\Gamma) - h(G'_{Y_\alpha},\beta_0'|\Gamma) \ge h(G_{Y_\alpha},\beta_0|\Gamma) - h(G_{Y_\alpha},\beta_0'|\Gamma)\\
-\iff & h(G'_{Y_\alpha},\beta_0|\Gamma) - h(G_{Y_\alpha},\beta_0|\Gamma) \ge h(G'_{Y_\alpha},\beta_0'|\Gamma) - h(G_{Y_\alpha},\beta_0'|\Gamma)\\
-\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG'_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
-& - \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\
-& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG'_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \\
-& - \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG_{Y_{\alpha}}(s|t) dF_{Y_{\beta_0}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')\\
-\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} (dG'_{Y_{\alpha}}(s|t) - dG_{Y_{\alpha}}(s|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
-& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} (dG'_{Y_{\alpha}}(s|t) - dG_{Y_{\alpha}}(s|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')\\
-\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (1-G'_{Y_{\alpha}}(a|t)) - (1-G_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
-& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} (1-G'_{Y_{\alpha}}(a|t)) - (1-G_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \\ 
-\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
-& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')
-\end{align*}
-$G'_{Y_\alpha} \mathop{\ge}_{\text{FOSD}} G_{Y_\alpha}$ implies $G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)$ is non-negative, so 
-\begin{align*}
-\int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0)
-\end{align*}
-is also non-negative since events can only have non-negative measure. Since $dF_{X_{\alpha,\beta}}$ is non-increasing in $\beta$, we have: 
-\begin{align*}
-& \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0)\\
-& \ge \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')
-\end{align*}
-So the proof would be completed if
-\begin{align*}
-& \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \\
-&  \ge  \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')\\
-\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\beta_0'} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \ge 0\\
-\end{align*}
-Which again is true from $G'_{Y_\alpha} \mathop{\ge}_{\text{FOSD}} G_{Y_\alpha}$ and the restriction to non-negative measures. $\Box$ \\
-
-This modeling requires shocks need to cause first order stochastically dominated shifts in access to a resource. The health care act fulfills this requirement if it only weakly increases the probability that an individual has enough access to health insurance to execute a given idea. It cannot for example change the distribution of access to capital or the distribution of ideas. We believe this is the case as long as we exclude firms in the health care sector from our analysis since the shock could have created new opportunities for health entrepreneurship.  
-
-The non-increasing condition can be interpreted as saying that we should not see more ideas for startups as the required amount of resources increases. Following our example, in general there should not be more ideas that require high capital than ideas that require lower capital. If this condition fails to hold then we will obverse an attenuation of the modeled effect. 
-
-Note that the required FOSD shift in $\alpha$ is allowed to be conditional on the level of resource $\beta$ possessed by the entrepreneur. In our example we can imagine entrepreneurs with access to high levels of capital to be less effected by the health care act than entrepreneurs with access to low levels of capital.  
-
-Next, consider how an increase in the distribution of $F_{Y_\alpha}$ impacts ideas from previous periods if those ideas are retained by the entrepreneur. Each period $T$'s expected number of startups becomes
-\begin{align}
-\mathbb{E}^T_Y[F_{X}] = \mathbb{E}_{Y_T}[F_{X}] + \sum_{t=0}^{T-1} max(0,\mathbb{E}_{Y_T}[F_{X}] - max(\mathbb{E}_{Y_i}[F_{X}] \forall i \in T{-}1,\dots,t)))
-\end{align}
-
-\textbf{Proposition 4:} If in any three consecutive periods $t=0,1,2$
-\begin{enumerate}[(a)]
-\item $F_{Y_\alpha,t=1} \mathop{\ge}_{\text{FOSD}} F_{Y_\alpha,t=0} $
-\item $F_{Y_\alpha,t=1} = F_{Y_\alpha,t=2} $
-\item $F_{Y_-\alpha|\alpha,t=0} = F_{Y_-\alpha|\alpha,t=1} =F_{Y_-\alpha|\alpha,t=2}$
-\end{enumerate}
-then
-\begin{enumerate}[(a)]
-\setcounter{enumi}{3}
-\item $\mathbb{E}_{Y}[F_{Y_\alpha,t=1}] \ge \mathbb{E}_{Y}[F_{Y_\alpha,t=2}]$
-\item $\mathbb{E}_{Y}[F_{Y_\alpha,t=2}] \ge \mathbb{E}_{Y}[F_{Y_\alpha,t=0}]$
-\end{enumerate}
-
-\textbf{Proof:} (d) follows from (2) and the expectation properties of first order stochastic dominance. (e) follows also from the properties of first order stochastic dominance.
-
-\begin{comment}
-
-\subsection*{Appendix B}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[scale=.8]{resources/NAICS_99.eps}
-	\caption{Total establishments with 1 to 4 employees in Massachusetts by NAICS code}
+	\begin{subfigure}[b]{0.495\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Weighted}
+	    \caption{Weighted by county population and clustered by county}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.495\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Unweighted}
+		  \caption{Clustered by county}
+	\end{subfigure}
+	\caption{Fixed effects point estimates of difference between control and treatment groups with 95\% confidence interval.}
 \end{figure}
 
-In Figure 4 we see the industry classified as NAICS 99 as changing drastically versus the other industries in the data set. NAICS 99 generally refers to unclassified firms. 
 
-\subsection*{Appendix C}
-
-Calculating the kernel density over the entire range of Kickstarter goals provides unsatisfactory results due to extreme values. There is for example a project with a stated goal of \$100,000,000, far higher than any funded project on Kickstarter. Of the top ten funded projects on Kickstarter, the highest project goal was just \$2,000,000. \\
-
-\begin{tabular}{|l | r| r|}
-	\hline
-	Project & Goal & Funding \\
-	\hline
-	Pebble Time	& \$500,000  & \$20,338,986\\
-	Coolest Cooler & \$50,000  & \$13,285,226\\
-	Pebble & \$100,000 & \$10,266,845\\
-	Exploding Kittens & \$10,000 & \$8,782,571\\
-	OUYA & \$950,000  & \$8,596,474\\
-	Pono Music & \$800,000  & \$6,225,354\\
-	Veronica Mars Movie Project & \$2,000,000  & \$5,702,153\\
-	Reading Rainbow & \$1,000,000  & \$5,408,916\\
-	Torment & \$900,000  & \$4,188,927\\
-	\hline
-\end{tabular} \\
-
-We therefore omit projects with goals \$5,000,000 or greater from the density estimate; these projects are abnormally high relative to what is realistic on Kickstarter. They likely reflect aspirational goals that go beyond the true capital requirements of the inventor's idea. 
-
-\end{comment}
-
-\begin{thebibliography}{99}
-
-\begin{comment}
-
-\bibitem{abadie}
-Abadie, Alberto. ``Synthetic Control Methods for Comparative Case Studies: Estimating the Effect of California’s Tobacco Control Program.'' Journal of the American Statistical Association 105 (2010): 493-505
-
-\bibitem{acharya}
-Acharya, Viral, and Krishnamurthy Subramanian, 2009, Bankruptcy codes and innovation, \emph{Review of Financial Studies} 22, 4949-4988.
-
-\bibitem{kaufman}
-Atkinson, Robert D., Scott Andes. 2010 ``The 2010 State New Economy Index: Benchmarking Economic Transformation in the States'' The Information Technology and Innovation Foundation, Kauffman Foundation
-
-
-\bibitem{bhide}
-Bhide, Amar. \emph{The origin and evolution of new businesses}. New York: Oxford UP, 2000.
-
-
-
-
-\end{comment}
-
-\bibitem{bailey}
-Bailey, James B., ``Health Insurance and the Supply of Entrepreneurs: New Evidence from the Affordable Care Act's Dependent Coverage Mandate'' (March 7, 2013). 
-
-\bibitem{bezos}
-Bezos, Jeff. ``2013 Letter to Shareholders.'' Letter to Amazon shareholders. 10 Apr. 2014.
-
-\bibitem{burton}
-Burton,M.D., J. B. S{\o}rensen, C.M. Beckman. 2002. ``Coming from good stock: Career histories and new venture formation.'' M. Lounsbury, ed. \emph{Research in the Sociology of Organizations}, Vol. 19. Emerald Publishing, Bingley, UK, 229-262.
-
-\bibitem{ericsonPakes}
-Ericson, Richard, and Ariel Pakes. ``Markov-Perfect Industry Dynamics: A Framework for Empirical Work.'' \emph{The Review of Economic Studies} 62.1 (1995): 53.
-
-\bibitem{fairlie}
-Fairlie, Robert W. ``The personal computer and entrepreneurship.'' \emph{Management Science} 52.2 (2006): 187-203.
-
-\bibitem{fairlieKarlanZinman}
-Fairlie, Robert W., Dean Karlan, and Jonathan Zinman. ``Behind the GATE Experiment: Evidence on Effects of and Rationales for Subsidized Entrepreneurship Training.'' No. w17804. \emph{National Bureau of Economic Research}, 2012.
-
-\bibitem{garthwaite}
-Garthwaite, Craig, Tal Gross, and Matthew J. Notowidigdo. ``Public Health Insurance, Labor Supply, and Employment Lock.'' \emph{The Quarterly Journal of Economics} 129.2 (2014): 653-696.
-
-\bibitem{gompers}
-Gompers, P., J. Lerner, D. Scharfstein. 2005. Entrepreneurial spawning: Public corporations and the genesis of new ventures, 1986 to 1999. \emph{J. Finance} 60(2) 577-614.
-
-\bibitem{gruber1997}
-Grilber, Jonathan. ``The Incidence of Payroll Taxation: Evidence from Chile.'' \emph{Journal of Labor Economics} 15.3 pt 2 (1997).
-
-
-\bibitem{gruber}
-Gruber, Jonathan. ``Massachusetts points the way to successful health care reform.'' \emph{Journal of Policy Analysis and Management} 30.1 (2011): 184-192.
-        
-\bibitem{gruberMadrian}
-Gruber, Jonathan, and Brigitte C. Madrian. ``Health insurance availability and the retirement decision.'' No. w4469. \emph{National Bureau of Economic Research}, 1993.
-        
-\bibitem{gm2002}
-Gruber, Jonathan, and Brigitte C. Madrian. ``Health insurance, labor supply, and job mobility: a critical review of the literature''. No. w8817. \emph{National Bureau of Economic Research}, 2002.      
-        
-\bibitem{heimLurie}
-Heim, Bradley T., and Ithai Z. Lurie. ``Does health reform affect self-employment? Evidence from Massachusetts.'' \emph{Small Business Economics} (2014): 1-14.
-
-\bibitem{hopenhayn}
-Hopenhayn, Hugo A. ``Entry, exit, and firm dynamics in long run equilibrium.'' \emph{Econometrica} (1992): 1127-1150.
-
-\bibitem{evans}
-Hurtado, Steven. ``Over Half of North American Software Developers are Moonlighting.'' \emph{Evans Data Corporation}. Nov 2012. Web. 27 Apr. 2015
-
-\bibitem{jovanovic}
-Jovanovic, Boyan. ``Selection and the Evolution of Industry.'' \emph{Econometrica} 50.3 (1982): 649.
-
-\bibitem{klepper}
-Klepper, Steven. ``Entry, exit, growth, and innovation over the product life cycle.'' \emph{American Economic Review} (1996): 562-583.
-
-\bibitem{npr}
-Knox, Richard. "Romney’s Mission: Massachusetts Health Care." \emph{National Public Radio} 8 (2006).
-
-\bibitem{masshealth}
-Massachusetts Medical Policy Institute. ``MassHealth: The Basics.'' Rep. Apr. 2014. 8 May 2014 
-
-
-\begin{comment}
-
-% <http://bluecrossmafoundation.org/sites/default/files/download/publication/PDF%20National%20comparisons%20chartpack%20june%202012.pdf/>. 
-
-
-\bibitem{himmelstein}
-Himmelstein, David U., Deborah Thorne, and Steffie Woolhandler. ``Medical Bankruptcy in Massachusetts: Has Health Reform Made a Difference?'' The American Journal of Medicine 124 (2011): 224-28.
-
-\bibitem{nvca}
-National Venture Captial Association. ``Q3 2014 Regional Data: Investments by State'' http://nvca.org/research/venture-investment/
-
-\bibitem{sorensen}
-Sorensen, J. B., and M. A. Fassiotto. ``Organizations as Fonts of Entrepreneurship.'' \emph{Organization Science} 22 (2011): 1322-331.
-
-
-
-\end{comment}
-
-\bibitem{miller}
-Miller, Sarah. ``The impact of the Massachusetts health care reform on health care use among children.'' \emph{The American Economic Review} 102.3 (2012): 502-507.
-
-\bibitem{heritage}
-Owcharenko, Nina, and Robert Moffit. ``The Massachusetts Health Plan: Lessons for the States.'' \emph{The Heritage Foundation}. 18 June 2006. Web. 27 Apr. 2015.
-
-\bibitem{roy}
-Roy, Andrew Donald. ``Some thoughts on the distribution of earnings.'' \emph{Oxford economic papers} 3.2 (1951): 135-146.
-
-
-\bibitem{scheuer}
-Scheuer, Florian. ``Entrepreneurial Taxation with Endogenous Entry.'' \emph{American Economic Journal: Economic Policy} 6.2 (2014): 126-63.
-
-\bibitem{schumpeter}
-Schumpeter, Joseph A. \emph{Capitalism, socialism, and democracy}. New York: Harper, 1950. 
-
-\bibitem{sorensenSorensen}
-Sorensen, Jesper B., and Olav Sorenson. ``From conception to birth: Opportunity perception and resource mobilization in entrepreneurship.'' \emph{Advances in Strategic Management} 20 (2003): 89-117.
-
-\bibitem{stuartSorensen}
-Stuart, Toby E., and Olav Sorenson. ``Social networks and entrepreneurship.'' \emph{Handbook of entrepreneurship research}. Springer US, 2005. 233-252.
-
-\bibitem{sullivan}
-Sullivan, Andrew. ``Obama's Meep Meep On Healthcare.'' Web log post. \emph{The Dish}. 16 Apr. 2014. 8 May 2014 
-
-\bibitem{bisweek}
-Symonds, William and Gleckman, Howard.  ``The Health-Care Crisis: States Are Rushing In.'' \emph{Business Week}. Bloomberg, 27 Nov. 2005. Web. 27 Apr. 2015.
-
-
-
-\begin{comment}
-
-http://dish.andrewsullivan.com/2014/04/16/obamas-meep-meep-on-health-care
-
-
-\bibitem{businessweek}
-Symonds, William C. ``In Massachusetts, Health Care for All?'' Bloomberg Business Week. Bloomberg, 03 Apr. 2006. Web. 26 Jan. 2015.
-
-\bibitem{wooldridgeBook}
-Wooldridge, J. M.  2002.  Econometric Analysis of Cross Section and Panel Data.  Cambridge, MA: MIT Press.
-
-\bibitem{census}
-http://www.census.gov/prod/2008pubs/p60-235.pdf
-
-Insured if covered by any kind of health insurance for all or part of the previous year
-
-\bibitem{globe}
-http://managinghealthcarecosts.blogspot.com/2011/06/romneycare-works.html
-2008 drop in uninsured and spike in costs
-
-\bibitem{chia}
-Asks if they currently have health insurance. 2008, summer, other years spring
-
-
-\bibitem{individual}
-https://www.power2u.org/downloads/Mass-health-care-reform-2011.pdf
-Individual plan enrollment grew between 2006 and 2008
-
-\bibitem{summers}
-Mandated Benefit Incidence (Summers, 1989)
-
-
-\end{comment}
-
-\bibitem{tuzemen}
-Tuzemen, Didem, and Thealexa Becker. ``Does Health-Care Reform Support Self-Employment?.'' \emph{Economic Review} Q III (2014): 5-23.
-
-\bibitem{uzzi}
-Uzzi, Brian. ``Embeddedness in the making of financial capital: How social relations and networks benefit firms seeking financing.'' \emph{American Sociological Review} (1999): 481-505.
-
-\end{thebibliography}
-
+\pagebreak
+
+CHECK 1-4 CHART
+
+Using Abadie's synthetic controls. For each MA county, create a synthetic county from all counties in the US with pre-treatment values, similar income, population age, urban percentage, and health insurance rates. Diff-and-diff is then done 1:1 between MA counties and synthetic counties. Seems to do a good job of removing the pre-trend but with the smaller control group the error bars don't get any better. 
+
+\begin{center}
+	\centering
+	\input{resources/county_synth.tex}
+\end{center}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpointSelf_Employment_Synth}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth}
+	\end{subfigure}
+\end{figure}
+
+\pagebreak
+
+Next I'm looking at what happens at each industry. For each naics 2 code, I run a separate diff-and-diff using the synthetic control method. I don't have self-employment data by industry. First is establishments with 1 to 4 employees. 
+
+\begin{center}
+	\centering
+	\input{resources/diff_em_pop_naics_2_synth.tex}
+\end{center}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_11}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_23}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_31}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_42}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_44}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_48}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_51}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_52}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_53}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_54}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_56}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_61}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_71}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_72}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint1_4_Establishment_Synth_81}
+	\end{subfigure}
+\end{figure}
+
+
+\pagebreak
+The same for establishments with 0 employees. 
+\begin{center}
+	\centering
+	\input{resources/diff_ne_pop_naics_2_synth1.tex}
+\end{center}
+
+\begin{center}
+	\centering
+	\input{resources/diff_ne_pop_naics_2_synth2.tex}
+\end{center}
+
+\begin{center}
+	\centering
+	\input{resources/diff_ne_pop_naics_2_synth3.tex}
+\end{center}
+
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_11}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_23}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_31}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_42}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_44}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_48}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_51}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_52}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_53}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_54}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_56}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_61}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_71}
+	\end{subfigure}
+	\begin{subfigure}[b]{0.4\textwidth}
+		  \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_72}
+	\end{subfigure}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\begin{subfigure}[b]{0.4\textwidth}
+	    \includegraphics[width=\textwidth]{resources/graphpoint0_Establishment_Synth_81}
+	\end{subfigure}
+\end{figure}
+
+
+\pagebreak
+
+
+naics 4 level with new england and synthetic controls, also by county
+
+\pagebreak
+
+naics 2 charts
+
+\pagebreak
+
+naics 2 tables
+
+\pagebreak
+
+naics 4 charts
+
+\pagebreak
+
+naics 4 charts
+
+\pagebreak
+
+\pagebreak
+
+Updated measure of capital intensity to be more realistic, now we see utilities as no longer being a relatively low capital industry. Used microdata to focus on establishments with either no or 1-4 employees in MA. Note I later drop utilities from the data set because there aren't many observations in MA. 
+
+\input{resources/capital.tex}
+
+\pagebreak
+
+Chart of point estimates of effect by industry's captial requirement. Should have positive slope if captial theory applies. 
+
+\pagebreak
+
+Triple diff of industry state measurements
+
+\pagebreak
+
+
+Non-profit theory
+
+\pagebreak
+
+Next steps: can possibly look at PUMS individual (ACS) data on employment to see if industries with that were greatly affected by health care had more employment
 
 \end{document}
-
-\begin{comment}
-
-
-
-JOB LOCK
-
-Baker et al 2001:
-Income security increases retirement rate
-
-Fairlie 2011:
-Job lock during the recession
-
-Gruber Madrain 1993:
-Job lock reduced by keeping coverage policy
-
-Garthwait et al 2014:
-Loosing healthcare increased labor supply in tennesee. 
-
-Gruber Hanratty 1995:
-Canada health plan increased employment, wages
-
-Fairlie 2006:
-Computer ownership and entrepreneurship, strong link between women and computers. Example of resource model. 
-
-Fairlie et al 2012:
-Training having low effect on those with capital constraints. Opposite to what we see here. 
-
-
-Unlike similar research using bankruptcy law \cite{acharya}, universal health-care may be a shock that significantly affects the decision making of many potential entrepreneurs. 
-
-Ericson Pakes 1995:
-Looks at firm success early in time, based on factors such as competition. Doesn't cover firm creation itself other than a sunk cost to be accounted for. We are looking earlier in the entrepreneur's thought process. 
-
-Whinston 1983:
-Moral hazard not to work, pool rather than custom disability benefits
-
-Job lock lacks modeling of ideas. 
-ideas models lack model of entrepeneru resources
-
-The idea of venture opportunity suggests that a cost benefit analysis determines the decision of whether to leave the firm \cite{sorensen}. A shock that affects the choice of leaving the firm can reveal much about the motivations behind entrepreneurial activity.
-
-Hopenhayn 1992:
-Theory model about new and existing firms making entry and exit decisions based on NPV of firm entry costs and profit. Can nest our model before this. 
-
-Jovanovic 1982: 
-Deals with firms learning about their cost function after entry. Not sure how to make it more relevant. 
-
-Klepper 1996: 
-Firm heterogeneity in innovative capabilities and scale (appropiability) lead to differences in firm exit behavior. Draws on innovation are dependent on firm innovative capacity and R and D spend. Also has firms imitating other's innovation. Closer to "take product to market" than what we are interested here. 
-
-
-
-
-HEALTH POLICY
-
-HP: LABOR MARKET
-HP: ENTREPRENEURSHIP
-HP: MASSHEALTH
-
-
-
-Bond White 2013:
-Masshealth primarcy care usage: Use 2007 as treatment start, refer to uninsured rate dropping
-
-Chan et al 2014:
-MassHealth on VHA utilization. Mid 2007 as start. 
-
-Lasser et al 2014:
-MassHealth on readmissions, uses 2nd quarter 2008 as first post reform period
-
-Long Dahlen 2014:
-Masshealth on low income children. Use 2008 as post-reform period
-
-Long et al 2012:
-Coverage impact of masshealth, again use 2008 as comparions, less clear on dates than above. 
-
-Miller 2012:
-(ECON JOURNAL) MassHealth on health care use among children. Uses 2008 as post treatment year, 2006 to 2007 as implementation year. 
-
-Miller 2012:
-Utilization, again using 2008 as post treatment year
-
-Santy et al 2014: 
-Use 2009 as treatment year since individual mandate penalty was not fully started then. Maybe tie back to setup of connector service. 
-
-Sommers et al 2014:
-Uses 2007 as post reform. Changes in mortality. Not clear that reform has impact until uninsurance rates go down. 
-
-Toussaint et al 2014: 
-MassHealth on uninsured rate, use 2008 as post reform period
-
-Tuzemen Becker 2014: 
-Reform support self-employment, 2008 as post period
-
-
-Arrieta 2013:
-Check impact on unpaid medical bills. Use 2006 as treatment start. 
-
-Badding Stephenson Yeoh 2012:
-Impact of masshealth on bankruptcy. Use 2006 as treatment start. Refer to the drop in uninsurance rate but that rate really gets impacted in 2008. 
-
-Baicker et al 2013: 
-Impact of Oregon health on employment rate
-
-Chetty Saez 2010:
-What is the optimal insurance policy, moral hazard etc. 
-
-clack et al 2014:
-Mass health women's access, Use sept 2007 as start.
-
-Courtemanche 2014:
-MassHealth self-assessed health, July 2007 as a start via individual mandate
-
-Dhingra 2013:
-Masshealth on coverage rates. 2007 as treatment, using states as control. Contrast with Mass being special for entrepreneurship
-
-
-\end{comment}
-

@@ -4895,11 +4895,14 @@ program define PierreOutput
 			drop d _Co_Number
 			
 			capture: eststo s_`y_variable'_`industry': xtreg `y_variable' treatment ib2007.year if inlist(stcode, 0,25) & naics == `industry', fe robust
-			if !inlist(_rc,0,2001){
+			if !inlist(_rc,0,2000,2001){
 				exit _rc
 			}
 			if _rc == 2001 {
 				display "Main: not enough observations with `y_variable' in industry `industry'"
+			}
+			if _rc == 2000 {
+				display "Main: No observations with `y_variable' in industry `industry'"
 			}
 			if _rc == 0 {
 				local titles `titles' "`industry'"
@@ -4918,11 +4921,14 @@ program define PierreOutput
 			keep if inlist(stcode, 0,25)
 			keep if naics == `industry'
 			capture: xtreg `y_variable' iYear* iTYear*, fe robust
-			if !inlist(_rc,0,2001){
+			if !inlist(_rc,0,2000,2001){
 				exit _rc
 			}
+			if _rc == 2000 {
+				display "Graph: No observations with `y_variable' in industry `industry'"
+			}
 			if _rc == 2001 {
-				display "Not enough observations with `y_variable' in industry `industry'"
+				display "Graph: Not enough observations with `y_variable' in industry `industry'"
 			}
 			if _rc == 0 {
 				GraphPoint iTYear 2007 "`graphTitle'_`industry'"
