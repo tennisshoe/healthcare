@@ -1,4 +1,6 @@
 clear all
+* need to incrase this for the synth function but perhaps not all the way to the max
+set maxvar 32767
 set more off, perm
 global dir "~/Healthcare"
 
@@ -150,10 +152,10 @@ program define GraphPoint
 	local line = `base' + 0.5	
 	
 	graph twoway ///
-		(line `temp_beta' `temp_year', lcolor(midblue) lpattern(dash)) ///
 		(rarea `temp_upper' `temp_lower' `temp_year', color(gs12) fintensity(inten50) xline(`line', lcolor(black))) ///
+		(line `temp_beta' `temp_year', lcolor(midblue) lpattern(dash)) ///
 		(scatter `temp_beta' `temp_year', mcolor(midblue)) ///
-		, title(`title') ytitle(Residual rate of new firms) yscale(titlegap(3)) ylabel(, labsize(small)) xtitle(Year) xlabel(2001 2004 2008 2012, labsize(small)) legend(order(2 3) label(3 "Treatment X Year Estimate") label(2 "Confidence Interval") cols(1) size(small)) graphregion(fcolor(dimgray))
+		, title(`title') ytitle(Residual rate of new firms) yscale(titlegap(3)) ylabel(, labsize(small)) xtitle(Year) xlabel(2001 2004 2008 2012, labsize(small)) legend(order(1 3) label(3 "Treatment X Year Estimate") label(1 "Confidence Interval") cols(1) size(small)) graphregion(fcolor(dimgray))
 	graph2tex, epsfile("$dir/tmp/graphpoint`title'")	
 		
 	drop `temp_year' `temp_beta' `temp_lower' `temp_upper'
@@ -3910,6 +3912,7 @@ end
 
 program define PierreOutput
 
+	/*
 	*** create naics captial table
 	import delimited $dir/Data/Capital/SBO_2007_00CSCB15_with_ann.csv, varnames(1) rowrange(3) clear
 	keep naicsdisplaylabel naicsid
@@ -4509,8 +4512,8 @@ program define PierreOutput
 	local treatment 2008
 	local MA 25
 	local maxEstimatesPerTable 5
-		
-	foreach y_variable of varlist /* diff_em_pop */ diff_ne_pop {
+			
+	foreach y_variable of varlist diff_em_pop diff_ne_pop {
 	
 		gen `y_variable'Beta = .
 	
@@ -4529,8 +4532,6 @@ program define PierreOutput
 		levelsof naics if stcode == `MA' & !missing(`y_variable'), local(industries)
 		foreach industry of local industries {
 
-			/*
-				
 			levelsof cntycd if stcode == `MA' & naics == `industry' & !missing(`y_variable'), local(counties)
 			foreach county of local counties {
 			
@@ -4566,11 +4567,10 @@ program define PierreOutput
 					`y_variable'(2001) `y_variable'(2002) `y_variable'(2003) `y_variable'(2004) `y_variable'(2005) `y_variable'(2006) `y_variable'(2007) ///
 					log_income percent_20_to_24 percent_urban percent_uninsured ///
 					, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
-					keep("$dir/tmp/synth_`county'_`industry'") replace				
+					keep("$dir/tmp/synth_`county'_`industry'_`y_variable'") replace				
 					
 				restore
 			}
-			*/
 
 			* next recreate the control as separate counties
 			gen e = 2 if stcode == `MA'
@@ -4586,7 +4586,8 @@ program define PierreOutput
 			foreach county of local counties {
 			
 				display "Merging County:`county' Industry:`industry'"
-				merge n:1 _Co_Number using "$dir/tmp/synth_`county'_`industry'.dta", assert(1 3)
+				merge n:1 _Co_Number using "$dir/tmp/synth_`county'_`industry'_`y_variable'.dta", assert(1 3)
+				* merge n:1 _Co_Number using "$dir/tmp/synth_`county'_`industry'.dta", assert(1 3)
 				drop _Y_treated _Y_synthetic _time _merge
 
 				gen w_diff = _W_Weight * `y_variable'
@@ -4645,7 +4646,7 @@ program define PierreOutput
 		}
 
 
-		if $eststo_counter > 0 {
+		if $eststo_counter + 0 > 0 {
 			esttab _all using $dir/tmp/`y_variable'_naics_2_synth`tableCount'.tex, ///
 				mtitles(`titles')   ///
 				keep("Massachusetts $\times$ Post 2007")  ///
@@ -4656,29 +4657,329 @@ program define PierreOutput
 				sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001)	
 			eststo clear
 		}
-		
-		
-		* preserve
+				
+		preserve
 		keep `y_variable'Beta naics
 		bysort `y_variable'Beta naics: keep if _n == 1
-		merge 1:1 naics using `capitalFile', assert(2 3)
+		merge 1:1 naics using `capitalFile'
 		keep if _merge == 3
 		drop _merge
 		graph twoway ///
 			(scatter `y_variable'Beta percent_no_funding, msymbol(+)) ///
 			(lfit `y_variable'Beta percent_no_funding, lcolor(midblue)) ///
 			, title(`title') ytitle(Coefficient) xtitle(Percent No Capital) legend(order(1 2) label(1 "Point Estimate") label(2 "Linear Trend"))
-		graph2tex, epsfile(`y_variable'_capital_naics_2)			
-		* restore
-				
+		graph2tex, epsfile($dir/tmp/`y_variable'_capital_naics_2)			
+		restore
 
 	}
+	*/
 
+	*** Now running NAICS 4 synth diff-diff
+	eststo clear
+	use $dir/tmp/nonemployedLong.dta, clear
+	* get rid of the same naics industies we dropped above
+	drop if naics >= 9900 & naics < 10000
+	* above 6240 consists of things like homeless shelters, not health related
+	drop if naics >= 6200 & naics < 6240
+	drop if naics >= 9500 & naics < 9600
+	drop if year < 2000
+	ren small ne_est	
+	keep ne_est stcode cntycd naics year	
+	* dropping naics that MA counties do not have much of
+	bysort stcode cntycd naics: egen t_est = total(ne_est)
+	drop if t_est < 1000 & stcode == 25
+	drop t_est	
+	save $dir/tmp/ne_tmp.dta, replace
+	
+	use $dir/tmp/countyBusiness.dta, clear
+	rename naics_4 naics
+	drop if missing(naics)
+	drop if naics >= 9900 & naics < 10000
+	drop if naics >= 6200 & naics < 6240
+	drop if naics >= 9500 & naics < 9600
+	ren n1_4 emp_est
+	drop if cntycd == 999
+	keep emp_est stcode cntycd naics year
+	bysort stcode cntycd naics: egen t_est = total(emp_est)
+	drop if t_est < 1000 & stcode == 25
+	drop t_est	
+
+	merge 1:1 stcode cntycd naics year using $dir/tmp/ne_tmp.dta
+	* note we have some missing data in MA since for some industries in 
+	* some counties there are non-employer but no employers and visa-versa
+	drop _merge
+
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+	
+	egen panel =  group(stcode cntycd naics)
+	tsset panel year
+	tsfill, full	
+	bysort panel: egen stcode_tmp = mean(stcode)
+	drop stcode
+	rename stcode_tmp stcode
+	bysort panel: egen naics_tmp = mean(naics)
+	drop naics
+	rename naics_tmp naics
+	bysort panel: egen cntycd_tmp = mean(cntycd)
+	drop cntycd
+	rename cntycd_tmp cntycd	
+	bysort panel: egen t_emp = count(emp_est)
+	bysort panel: egen t_ne = count(ne_est)
+	replace emp_est = 0 if missing(emp_est) & t_emp > 0
+	replace ne_est = 0 if missing(ne_est) & t_ne > 0
+	drop t_emp t_ne
+	
+	sort panel year	
+	gen em_pop = emp_est / population
+	gen ne_pop = ne_est / population
+	gen diff_em_pop = D.em_pop
+	gen diff_ne_pop = D.ne_pop
+
+	* gen control = inlist(stcode, 9, 23, 25, 33, 44, 50)
+	gen treatment = stcode == 25 & year > 2007
+
+	rename year year_tmp
+	gen year = 2006
+	merge n:1 stcode year using "$dir/tmp/MedianIncomeState.dta"
+	drop year
+	rename year_tmp year
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+	gen log_income = log(income)
+	drop(income)
+
+	* percent aged 20-24 or so since MA has a lot of universities
+	* child dependancy ratio
+	* this is currently using 2000 year data
+	merge n:1 stcode cntycd using "$dir/tmp/ageGroup.dta"
+	count if _merge == 1
+	* assert(r(N)==0)
+	bysort panel: egen error = total(_merge == 1)
+	drop if error
+	drop error	
+	drop if _merge == 2
+	drop _merge
+	
+	* percent with healthcare
+	* using 2005 data
+	merge n:1 stcode cntycd using "$dir/tmp/insurance.dta"
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+
+	* urban population
+	* using 2000 year data
+	merge n:1 stcode cntycd using "$dir/tmp/urban.dta"
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+
+	keep treatment naics year panel diff_em_pop diff_ne_pop stcode cntycd log_income percent_uninsured percent_20_to_24 percent_urban
+	compress
+
+	drop if year == 2000
+	
+	* set graphics off
+	local treatment 2008
+	local MA 25
+	local maxEstimatesPerTable 5
+			
+	foreach y_variable of varlist diff_em_pop diff_ne_pop {
+	
+		gen `y_variable'Beta = .
+	
+		local titles
+		local tableCount 1
+		
+		local title "1-4 Worker"
+		local graphTitle "1_4_Establishment_Synth"
+		local capitalFile "$dir/tmp/capital.dta"
+		if "`y_variable'" == "diff_ne_pop" {
+			local title "0 Worker"
+			local graphTitle "0_Establishment_Synth"
+			local capitalFile "$dir/tmp/capitalNonemployer.dta"
+		}
+	
+		levelsof naics if stcode == `MA' & !missing(`y_variable'), local(industries)
+		foreach industry of local industries {
+
+			levelsof cntycd if stcode == `MA' & naics == `industry' & !missing(`y_variable'), local(counties)
+			foreach county of local counties {
+			
+				preserve
+
+				* picking counties with similar predictor values
+				local max_sd 1
+				sort stcode cntycd
+				by stcode cntycd: gen tag = _n == 1
+				local predictors log_income percent_20_to_24 percent_urban percent_uninsured		
+
+				foreach predictor of varlist `predictors' {
+					* for the percentage predictors, do I model as a uniform and use p(1-p) as variance?
+					by stcode cntycd: egen st_mean = mean(`predictor')
+					su st_mean if tag
+					local max_d = `max_sd' * r(sd)
+					su st_mean if stcode == `MA' & cntycd == `county'
+					drop if st_mean >  r(mean) + `max_d' | st_mean < r(mean) - `max_d'
+					su st_mean if tag
+					drop st_mean
+				}
+				drop tag
+				
+				* drop counties that are missing our y_variable in some years
+				by stcode cntycd: egen t_variable = count(`y_variable') if naics == `industry'
+				su t_variable
+				drop if t_variable < r(max) & stcode != `MA'			
+				drop t_variable
+				
+				* also skip if county did not have data for all years
+				count if stcode == `MA' & cntycd == `county' & naics == `industry' & !missing(`y_variable')
+				if r(N) == 12 {				
+					* should only be one
+					levelsof panel if stcode == `MA' & cntycd == `county' & naics == `industry', local(trunit)
+					levelsof panel if stcode != `MA' & naics == `industry', local(counit)		
+					synth `y_variable' ///
+						`y_variable'(2001) `y_variable'(2002) `y_variable'(2003) `y_variable'(2004) `y_variable'(2005) `y_variable'(2006) `y_variable'(2007) ///
+						log_income percent_20_to_24 percent_urban percent_uninsured ///
+						, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
+						keep("$dir/tmp/synth_`county'_`industry'_`y_variable'") replace				
+					
+				}
+				
+				restore
+			}
+
+			* next recreate the control as separate counties
+			gen e = 2 if stcode == `MA'
+			expand e, gen(d)
+			drop e
+			replace panel = -panel if d == 1
+			replace `y_variable' = . if d == 1
+			replace stcode = 0 if d == 1
+			
+			gen _Co_Number = panel
+			
+			levelsof cntycd if stcode == `MA' & naics == `industry' & !missing(`y_variable'), local(counties)
+			foreach county of local counties {
+
+				count if stcode == `MA' & cntycd == `county' & naics == `industry' & !missing(`y_variable')
+				if r(N) == 12 {							
+					display "Merging County:`county' Industry:`industry'"
+					merge n:1 _Co_Number using "$dir/tmp/synth_`county'_`industry'_`y_variable'.dta", assert(1 3)
+					* merge n:1 _Co_Number using "$dir/tmp/synth_`county'_`industry'.dta", assert(1 3)
+					drop _Y_treated _Y_synthetic _time _merge
+
+					gen w_diff = _W_Weight * `y_variable'
+					bysort year: egen c_diff = total(w_diff)
+					replace `y_variable' = c_diff if d == 1 & stcode == 0 & cntycd == `county' & naics == `industry'
+					drop w_diff c_diff _W_Weight
+				}
+				else {
+					replace `y_variable' = . if stcode == `MA' & cntycd == `county' & naics == `industry'
+				}
+
+			}
+			
+			drop d _Co_Number
+			
+			capture: eststo s_`y_variable'_`industry': xtreg `y_variable' treatment ib2007.year if inlist(stcode, 0,25) & naics == `industry', fe robust
+			if !inlist(_rc,0,2001){
+				exit _rc
+			}
+			if _rc == 2001 {
+				display "Main: not enough observations with `y_variable' in industry `industry'"
+			}
+			if _rc == 0 {
+				local titles `titles' "`industry'"
+				replace `y_variable'Beta = _b[treatment] if naics == `industry'
+				estadd local w "None" 
+				estadd local c "County"
+			}
+
+			levelsof year, local(years)	
+			foreach year of local years {
+				if `year' == 2007 | `year' == 2000 continue
+				gen iYear`year' = year == `year'
+				gen iTYear`year' = (year == `year') & (stcode == 25)
+			}
+			preserve
+			keep if inlist(stcode, 0,25)
+			keep if naics == `industry'
+			capture: xtreg `y_variable' iYear* iTYear*, fe robust
+			if !inlist(_rc,0,2001){
+				exit _rc
+			}
+			if _rc == 2001 {
+				display "Not enough observations with `y_variable' in industry `industry'"
+			}
+			if _rc == 0 {
+				GraphPoint iTYear 2007 "`graphTitle'_`industry'"
+			}
+			restore		
+			drop iYear* iTYear*					
+			drop if stcode == 0
+			
+			* want to keep the number of estimates per table capped at 5
+			if $eststo_counter >= `maxEstimatesPerTable' {
+				esttab _all using $dir/tmp/`y_variable'_naics_4_synth`tableCount'.tex, ///
+					mtitles(`titles')   ///
+					keep("Massachusetts $\times$ Post 2007")  ///
+					rename(treatment "Massachusetts $\times$ Post 2007") ///
+					title(`title') ///
+					nobaselevels nonumbers replace compress se r2 scalar("F F-test" "N_g Groups" "w Weight" "c Cluster") ///
+					indicate("Year FE = *.year") ///
+					sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001)					
+				eststo clear
+				local tableCount = `tableCount' + 1
+				local titles
+			}			
+			
+		}
+
+
+		if $eststo_counter + 0 > 0 {
+			esttab _all using $dir/tmp/`y_variable'_naics_4_synth`tableCount'.tex, ///
+				mtitles(`titles')   ///
+				keep("Massachusetts $\times$ Post 2007")  ///
+				rename(treatment "Massachusetts $\times$ Post 2007") ///
+				title(`title') ///
+				nobaselevels nonumbers replace compress se r2 scalar("F F-test" "N_g Groups" "w Weight" "c Cluster") ///
+				indicate("Year FE = *.year") ///
+				sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001)	
+			eststo clear
+		}
+				
+		preserve
+		keep `y_variable'Beta naics
+		bysort `y_variable'Beta naics: keep if _n == 1
+		merge 1:1 naics using `capitalFile'
+		keep if _merge == 3
+		drop _merge
+		graph twoway ///
+			(scatter `y_variable'Beta percent_no_funding, msymbol(+)) ///
+			(lfit `y_variable'Beta percent_no_funding, lcolor(midblue)) ///
+			, title(`title') ytitle(Coefficient) xtitle(Percent No Capital) legend(order(1 2) label(1 "Point Estimate") label(2 "Linear Trend"))
+		graph2tex, epsfile($dir/tmp/`y_variable'_capital_naics_4)			
+		restore
+
+	}
 	
 	
 end
 
-//PierreOutput
+PierreOutput
 //StateDiff
 //MatchingState
 //SummaryStats_NaicsLoop_4
