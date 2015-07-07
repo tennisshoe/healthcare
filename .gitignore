@@ -1,0 +1,12 @@
+*.pdf
+*.xlsx
+*.pptx
+*.aux
+*.log
+*.gz
+*.asv
+*.m
+*.pat
+Related Research/*
+Data/*
+resources/*
