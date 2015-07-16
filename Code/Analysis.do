@@ -4691,13 +4691,11 @@ program define PierreOutput
 	drop t_est	
 	save $dir/tmp/ne_tmp.dta, replace
 	
-	use $dir/tmp/countyBusiness.dta, clear
-	rename naics_4 naics
-	drop if missing(naics)
+	use $dir/tmp/countyBusinessLong.dta, clear
 	drop if naics >= 9900 & naics < 10000
 	drop if naics >= 6200 & naics < 6240
 	drop if naics >= 9500 & naics < 9600
-	ren n1_4 emp_est
+	ren small emp_est
 	drop if cntycd == 999
 	keep emp_est stcode cntycd naics year
 	bysort stcode cntycd naics: egen t_est = total(emp_est)
@@ -4717,10 +4715,13 @@ program define PierreOutput
 	keep if _merge == 3
 	drop _merge					
 	* for better readability dividing population by one million
-	replace population = population / 1000000
+	replace population = population / 1000000	
 	
 	egen panel =  group(stcode cntycd naics)
 	tsset panel year
+	
+	* full panel generated in data files, not needed here
+	/*	
 	tsfill, full	
 	bysort panel: egen stcode_tmp = mean(stcode)
 	drop stcode
@@ -4736,6 +4737,7 @@ program define PierreOutput
 	replace emp_est = 0 if missing(emp_est) & t_emp > 0
 	replace ne_est = 0 if missing(ne_est) & t_ne > 0
 	drop t_emp t_ne
+	*/
 	
 	sort panel year	
 	gen em_pop = emp_est / population
@@ -4796,7 +4798,7 @@ program define PierreOutput
 	local MA 25
 	local maxEstimatesPerTable 5
 			
-	foreach y_variable of varlist diff_em_pop diff_ne_pop {
+	foreach y_variable of varlist diff_ne_pop { // diff_em_pop {
 	
 		gen `y_variable'Beta = .
 	
@@ -4817,36 +4819,37 @@ program define PierreOutput
 
 			levelsof cntycd if stcode == `MA' & naics == `industry' & !missing(`y_variable'), local(counties)
 			foreach county of local counties {
-			
-				preserve
 
-				* picking counties with similar predictor values
-				local max_sd 1
-				sort stcode cntycd
-				by stcode cntycd: gen tag = _n == 1
-				local predictors log_income percent_20_to_24 percent_urban percent_uninsured		
-
-				foreach predictor of varlist `predictors' {
-					* for the percentage predictors, do I model as a uniform and use p(1-p) as variance?
-					by stcode cntycd: egen st_mean = mean(`predictor')
-					su st_mean if tag
-					local max_d = `max_sd' * r(sd)
-					su st_mean if stcode == `MA' & cntycd == `county'
-					drop if st_mean >  r(mean) + `max_d' | st_mean < r(mean) - `max_d'
-					su st_mean if tag
-					drop st_mean
-				}
-				drop tag
-				
-				* drop counties that are missing our y_variable in some years
-				by stcode cntycd: egen t_variable = count(`y_variable') if naics == `industry'
-				su t_variable
-				drop if t_variable < r(max) & stcode != `MA'			
-				drop t_variable
-				
 				* also skip if county did not have data for all years
 				count if stcode == `MA' & cntycd == `county' & naics == `industry' & !missing(`y_variable')
 				if r(N) == 12 {				
+			
+					preserve
+
+					* picking counties with similar predictor values
+					local max_sd 1
+					sort stcode cntycd
+					by stcode cntycd: gen tag = _n == 1
+					local predictors log_income percent_20_to_24 percent_urban percent_uninsured		
+
+					foreach predictor of varlist `predictors' {
+						* for the percentage predictors, do I model as a uniform and use p(1-p) as variance?
+						by stcode cntycd: egen st_mean = mean(`predictor')
+						su st_mean if tag
+						local max_d = `max_sd' * r(sd)
+						su st_mean if stcode == `MA' & cntycd == `county'
+						drop if st_mean >  r(mean) + `max_d' | st_mean < r(mean) - `max_d'
+						su st_mean if tag
+						drop st_mean
+					}
+					drop tag
+					
+					* drop counties that are missing our y_variable in some years
+					by stcode cntycd: egen t_variable = count(`y_variable') if naics == `industry'
+					su t_variable
+					drop if t_variable < r(max) & stcode != `MA'			
+					drop t_variable
+					
 					* should only be one
 					levelsof panel if stcode == `MA' & cntycd == `county' & naics == `industry', local(trunit)
 					levelsof panel if stcode != `MA' & naics == `industry', local(counit)		
@@ -4855,10 +4858,10 @@ program define PierreOutput
 						log_income percent_20_to_24 percent_urban percent_uninsured ///
 						, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
 						keep("$dir/tmp/synth_`county'_`industry'_`y_variable'") replace				
-					
+											
+					restore
 				}
-				
-				restore
+
 			}
 
 			* next recreate the control as separate counties

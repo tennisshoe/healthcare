@@ -898,7 +898,6 @@ program define inner_BuildNonemployerData
 	keep cntycd stcode naics_2 naics_4 small 
 end
 
-* at the moment just looking at 2 digit codes as a starting point
 program define BuildNonemployerData
 
 	!rm $dir/tmp/nonemployed*.dta
@@ -936,12 +935,49 @@ program define BuildNonemployerData
 		gen year = 19`i'
 		save $dir/tmp/nonemployed19`i'.dta
 	}
-
-	clear
+	
+	local naics_update "1997_to_2002_NAICS" "2002_to_2007_NAICS" "2007_to_2012_NAICS"
+	
+	* first prep the files needed to update NAICS 4 codes
+	foreach file in "`naics_update'" {	
+		clear
+		import delimited $dir/Data/naics/`file'.csv
+		* can't do anything about 4 digit naics that get split		
+		bysort old: egen max_new = max(new)
+		bysort old: egen min_new = min(new)
+		drop if max_new != min_new
+		drop if new == old
+		bysort old new: keep if _n == 1
+		keep old new
+		save $dir/tmp/`file'.dta, replace
+	}
+	
+	clear	
 	forvalues i=1997/2012 {
 		append using $dir/tmp/nonemployed`i'.dta
 	}
 	compress
+
+	* updating to 2012 naics codes
+	ren naics_4 old
+	merge n:1 old using $dir/tmp/1997_to_2002_NAICS.dta
+	drop if _merge == 2
+	replace old = new if !missing(new) & year < 2002
+	keep cntycd stcode naics_2 old small year
+	merge n:1 old using $dir/tmp/2002_to_2007_NAICS.dta
+	drop if _merge == 2
+	replace old = new if !missing(new) & year < 2007
+	keep cntycd stcode naics_2 old small year	
+	merge n:1 old using $dir/tmp/2007_to_2012_NAICS.dta
+	drop if _merge == 2
+	replace old = new if !missing(new) & year < 2012
+	keep cntycd stcode naics_2 old small year	
+	ren old naics_4
+
+	bysort stcode cntycd naics_4 year: egen total_small = total(small) if missing(naics_2)
+	bysort stcode cntycd naics_4 year: drop if _n > 1 & missing(naics_2)
+	replace small = total_small if missing(naics_2)
+	drop total_small
 	
 	* now building full panel
 
@@ -1006,7 +1042,9 @@ program define BuildNonemployerData
 	*/
 	
         egen panel =  group(stcode cntycd naics)
-        tsset panel year
+        tsset panel year	
+	
+	/*
         tsfill, full
         
         bysort panel: egen stcode_tmp = mean(stcode)
@@ -1017,10 +1055,13 @@ program define BuildNonemployerData
         rename cntycd_tmp cntycd        
         bysort panel: egen naics_tmp = mean(naics)
         drop naics
-        rename naics_tmp naics  
-        replace small = 0 if missing(small)
-		
-	save $dir/tmp/nonemployed.dta
+        rename naics_tmp naics	
+	bysort panel: ipolate small year, gen(ip_small) epolate
+	drop small
+	rename ip_small small
+	*/
+	
+	save $dir/tmp/nonemployed.dta, replace
 	
 	restore
 
@@ -1073,7 +1114,9 @@ program define BuildNonemployerData
 
         egen panel =  group(stcode cntycd naics)
         tsset panel year
-        tsfill, full
+        
+	/*
+	tsfill, full
         
         bysort panel: egen stcode_tmp = mean(stcode)
         drop stcode
@@ -1084,9 +1127,12 @@ program define BuildNonemployerData
         bysort panel: egen naics_tmp = mean(naics)
         drop naics
         rename naics_tmp naics  
-        replace small = 0 if missing(small)
-		
-	save $dir/tmp/nonemployedLong.dta
+	bysort panel: ipolate small year, gen(ip_small) epolate
+	drop small
+	rename ip_small small
+	*/
+	
+	save $dir/tmp/nonemployedLong.dta, replace
 
 end
 
@@ -1192,10 +1238,89 @@ program define BuildCountyBusinessData
 		append using $dir/tmp/countyBusiness`i'.dta
 	}
 
+	keep stcode cntycd n1_4 year naics_2 naics_4
+	ren n1_4 small
+
 	destring naics_2, replace
 	destring naics_4, replace
-	compress
-	save $dir/tmp/countyBusiness.dta
+	compress		
+
+	* updating to 2012 naics codes
+	ren naics_4 old
+	merge n:1 old using $dir/tmp/1997_to_2002_NAICS.dta
+	drop if _merge == 2
+	replace old = new if !missing(new) & year < 2002
+	drop new _merge
+	merge n:1 old using $dir/tmp/2002_to_2007_NAICS.dta
+	drop if _merge == 2
+	replace old = new if !missing(new) & year < 2007
+	drop new _merge
+	merge n:1 old using $dir/tmp/2007_to_2012_NAICS.dta
+	drop if _merge == 2
+	replace old = new if !missing(new) & year < 2012
+	drop new _merge
+	ren old naics_4
+
+	bysort stcode cntycd naics_4 year: egen total_small = total(small) if missing(naics_2)
+	bysort stcode cntycd naics_4 year: drop if _n > 1 & missing(naics_2)
+	replace small = total_small if missing(naics_2)
+	drop total_small
+	
+	preserve
+
+	drop if missing(naics_2)
+	ren naics_2 naics
+	
+	* fill out the panel
+	egen panel =  group(stcode cntycd naics)
+        tsset panel year
+	
+	/*
+        tsfill, full
+        
+        bysort panel: egen stcode_tmp = mean(stcode)
+        drop stcode
+        rename stcode_tmp stcode
+        bysort panel: egen cntycd_tmp = mean(cntycd)
+        drop cntycd
+        rename cntycd_tmp cntycd        
+        bysort panel: egen naics_tmp = mean(naics)
+        drop naics
+        rename naics_tmp naics  
+	bysort panel: ipolate small year, gen(ip_small) epolate
+	drop small
+	rename ip_small small
+	*/
+
+	save $dir/tmp/countyBusiness.dta, replace
+	
+	restore
+
+	drop if missing(naics_4)
+	ren naics_4 naics
+	
+	* fill out the panel
+	egen panel =  group(stcode cntycd naics)
+        tsset panel year
+	
+	/*
+        tsfill, full
+        
+        bysort panel: egen stcode_tmp = mean(stcode)
+        drop stcode
+        rename stcode_tmp stcode
+        bysort panel: egen cntycd_tmp = mean(cntycd)
+        drop cntycd
+        rename cntycd_tmp cntycd        
+        bysort panel: egen naics_tmp = mean(naics)
+        drop naics
+        rename naics_tmp naics  
+	bysort panel: ipolate small year, gen(ip_small) epolate
+	drop small
+	rename ip_small small
+	*/
+
+	save $dir/tmp/countyBusinessLong.dta, replace
 
 end
 
@@ -1503,6 +1628,7 @@ program define InfogroupToCountyBusiness
 
 end
 
+BuildCountyBusinessData
 BuildNonemployerData
 //BuildCaptialData
 //BuildCountyBusinessLongData
