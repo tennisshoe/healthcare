@@ -47,13 +47,13 @@ Obamacare affected me in another critical way as well. Its assurance of a stable
 
 Most of the current literature on this topic focuses on who are the entrepreneurs that are prevented from starting firms. Holtz-Eakin et al.\footnote{HOLTZ-EASKIN}, Wellington \footnote{WELLINGTON} and Fairie et al \footnote{Fairie et all} consider entrepreneurs with health care through their spouses. Fairie et al \footnote{Fairie et all} study entrepreneurs near the traditional retirement age. Heim and Lurie show variation in health insurance's impact by age group and tax filing status. 
 
-However to our knowledge the complementary question of what \textit{entrepreizes} are blocked from being created has not been asked. When probed about the entrepreneurial impact of Massachusetts' 2006 health insurance market reform, one high-tech entrepreneur in the Kendell Square area responded:
+However we are not aware of research asking the complementary question of what \textit{enterprises} are blocked from creation. When probed about the entrepreneurial impact of Massachusetts' 2006 health insurance market reform, one high-tech entrepreneur in the Kendell Square area responded:
 \begin{quote}
 [The] top barrier[s] to people starting companies are [a] lack of drive and lack of capital ... it takes a lot of drive to start companies, and lack of healthcare is too small a barrier compared to others. For some freelancer[s] I think healthcare does help
 \end{quote}
 The above quote suggests health insurance reform would have a greater impact on enterprises requiring low capital investment. We may for example see an effect in self-employed consultants but not in more high growth startups. More generally, the impact of reform may vary by industry and not just entrepreneur. 
 
-In this paper we use explore how enterprises are affected by access to health care. We contribute to the literature in two ways. We first present models that suggest capital intensity and non-profit status should create heterogeneity in outcomes by industry. We then test those model predictions using the 2006 Massachusetts health reform as a natural experiment. Our results complement previous research by suggesting that even if the propensity to become self-employed increases, access to health care may not matter much for the wider economy. We do not find evidence that access to health care increases firm creation.  
+In this paper we explore how enterprises are affected by access to health care. We contribute to the literature in two ways. We first present simple models that suggest capital intensity and non-profit status should create heterogeneity in outcomes by industry. We then test those model predictions using the 2006 Massachusetts health reform as a natural experiment. Our results complement previous research by suggesting that even if the propensity to become self-employed increases, access to health care may not matter much for the wider economy. We do not find evidence that access to health care increases firm creation.  
 
 The rest of the article proceeds as follows. Section \ref{sec:review} provides an overview of the previous research done in this area. Section \ref{sec:reform} describes the Massachusetts health reform we use as a policy shock. Section \ref{sec:data} describes the data sources we use in our analysis. Section \ref{sec:model} outlines a model that considers how the reform should heterogeneously affect entrepreneurship by industry. Section \ref{sec:results} presents the effects of the reform on entrepreneurship and Section \ref{sec:conclude} concludes. 
 
@@ -63,6 +63,24 @@ The rest of the article proceeds as follows. Section \ref{sec:review} provides a
 Previous research on whether access to health insurance affects entrepreneurial rates have produced mixed results. Holtz-Eakin et al.\footnote{HOLTZ-EASKIN} test this relationship using both variance in spousal insurance coverage and regulation requiring the ability to continue coverage after employment ends\footnote{Consolidated Omnibus Budget Reconciliation Act of 1985 (COBRA)}. They find no result and posit entrepreneurs would not be dissuaded by concerns over health insurance. More recently the Affordable Care Act of 2010 required health insurance plans to cover dependents up to the age of 26. Bailey uses this policy change to test whether improving access to health insurance increases entrepreneurial rates and finds no effect. 
 
 In contrast, both Wellington \footnote{WELLINGTON} and Fairie et al \footnote{Fairie et all} provide evidence that having a spouse with insurance increases the propensity to become an entrepreneur. Fairie et al \footnote{Fairie et all} also exploit the Medicare cutoff at age 65 to suggest entrepreneurship increases at the discontinuity. Heim and Lurie analyze tax filing data using the 2006 health care reform in Massachusetts as a shock which increased access to health insurance. They find a small decrease in the overall probability a taxpayer earns a majority of their income from self-employment which varied by age group. Tuzemen and Becker apply census data to the same shock and find that self-employment rates in Massachuetts rose relative to other New England states. 
+
+The more general job lock literature has been more consistent in showing that health
+care changes increase incentives to leave current employment. Early work by Gruber and Madrain found that enabling
+employees to keep their current policy reduces job lock \footnote{Gruber and Madrain}. More recently, Garthwait, Gross and Notowidigo show how the loss of healthcare to a group in Tennesee increased
+the area's labor supply \footnote{Garthwait, Gross and Notowidigo}.
+
+The source of variation used this paper, the Massachusetts reform of 2006, has been empirically shown to have affected health outcomes. Toussaint et al. \footnote{Toussaint} find uninsurance rates dropped in trauma centers. Miller uses both within state variation in insurance rates and the rest of New England as a control to suggest non-urgent ER visits dropped after the reform \footnote{Miller 2012}.  Summers, Long, and Baicker \footnote{Summers long baicker 2014} find mortality rates dropped as a result of the reform. 
+
+\begin{comment}
+
+The taxation literature has also explored how
+workers might value benefits that are funded by taxes, see Gruber [9]. We contribute
+by providing a novel setting to test the relationship between expected taxation and
+self-employment.
+
+\end{comment}
+
+To summarize, although there is uncertainty about the impact of health insurance on entrepreneurship, there is strong evidence that both job lock exists and that the Massachusetts reform changed health care in the state. 
 
 \section{Massachusetts Reform}
 \label{sec:reform}
@@ -103,14 +121,34 @@ From an entrepreneurial standpoint, we view the act as having improved the healt
 \label{sec:data}
 
 
-We measure our outcome variable of entrepreneurship with three different US Census data sets. First we measure self-employment from the American Community Survey (ACS). The ACS surveys households for employment status and provides information on self-employment rates on a county basis. 
+We measure our outcome variable of entrepreneurship with three different US Census data sets. First we measure self-employment from the American Community Survey (ACS). The ACS surveys households for employment status and provides information on self-employment rates on a county basis. Although this self-employment data lacks the industry classification necessary for main findings, it connects well with previous research that tested the impact of health reform on self-employment rates. 
 
- Our measurement of self-employment rates comes from 
+Our second source of data is the Census Country Business Patterns (CBP). The CBP is an annual series based on the Census Business Register, a dataset of US firms that is continuously updated using multiple methods including surveys and tax reporting. The CBP provides country level information on for example the industry, sales and employee count of establishments. It excludes businesses with no paid employees. As shown in Figure \ref{fig:firm_est}, establishments closely track firms. Although we are primarily interested in new firm creation, the census does not publicly provide firm level data at the industry level per county. We use establishments of 1 to 4 employees as a proxy for entrepreneurial firms. 
 
-The Census Country Business Patterns (CBP) data provides us with data on 
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{resources/firm_est_MA.eps}
+	\caption{Number of firms and establishments in Massachusetts with 1 to 4 employees}
+	\label{fig:firm_est}
+\end{figure}
+
+Our third source of data is the Nonemployer Statistics series. The NS is based on tax filings. It includes self-employed individuals as well incorporated businesses and partnerships that lack employees. 
+
+Note that all three of our data sources suffer from being measurements of net rather than gross values. If  we do not obverse a change in number establishments over a period of time, this does not necessarily mean no new firms were created. No change happens when the rate of firm entrance equals the rate of firm exit. Exit and entrance are also definitional; a previously existent firm that hired its first worker would be listed as a entrant in the CBP data. Unfortunately we were not able to find a satisfactory public data set with gross establishment or firm numbers. However we think any change in the rate of entrepreneurship will still appear in our dataset. Figure \ref{fig:construct} shows how the number of nonemployers the construction industry, typically very cyclical, rose during the boom period of mid-2000 only to fall again with the 2008 recession. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.6]{resources/construction.eps}
+	\caption{Number of nonemployers in the MA construction industry}
+	\label{fig:construct}
+\end{figure}
 
 
-. The CBP is an annual series based on the Census Business Register, a dataset of US firms that is continuously updated using multiple methods including surveys and tax reporting. The CBP provides country level information on for example the industry, sales and employee count of establishments. It excludes businesses with no paid employees. We use establishments of 1 to 4 employees as a proxy for entrepreneurial firms. Table 1 provides summary means for small establishments in Massachusetts and other New England states based on the CBP and Census population data from 2000 to 2012. To reduce potential endogeneity we remove firms in the health care industry from our sample since our shock may have increased health related opportunities for entrepreneurs. 
+
+
+
+
+ Table 1 provides summary means for our three variables of interest in Massachusetts and other New England states from 2000 to 2012. To reduce potential endogeneity we remove firms in the health care industry from our sample since our shock may have increased health related opportunities for entrepreneurs. 
 
 
 \begin{flushleft}
@@ -378,6 +416,9 @@ People will do this anyway
 Cost of insurance is not covered; still expensive. 
 People disuaded small sub-sample of entrepreneurs, pre-existing conditions or those with kids but no spousal insurance or access to VC funds
 
+However 
+Long and Dahlen \footnote{Long Dahlen 2014} and Long, Stockly and Nordahl \footnote{2012} show insurance rates increased primarily among low income, childless adults. Not the demographic for entrepreneurs. 
+
 \appendix
 \section*{Appendix}
 \subsection*{Appendix A}
@@ -566,7 +607,7 @@ Garthwaite, Craig, Tal Gross, and Matthew J. Notowidigdo. ``Public Health Insura
 Gompers, P., J. Lerner, D. Scharfstein. 2005. Entrepreneurial spawning: Public corporations and the genesis of new ventures, 1986 to 1999. \emph{J. Finance} 60(2) 577-614.
 
 \bibitem{gruber1997}
-Grilber, Jonathan. ``The Incidence of Payroll Taxation: Evidence from Chile.'' \emph{Journal of Labor Economics} 15.3 pt 2 (1997).
+Gruber, Jonathan. ``The Incidence of Payroll Taxation: Evidence from Chile.'' \emph{Journal of Labor Economics} 15.3 pt 2 (1997).
 
 
 \bibitem{gruber}
