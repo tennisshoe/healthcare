@@ -1269,6 +1269,7 @@ program define BuildCountyBusinessData
 	preserve
 
 	drop if missing(naics_2)
+	drop naics_4
 	ren naics_2 naics
 	
 	* fill out the panel

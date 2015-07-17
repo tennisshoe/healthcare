@@ -3910,7 +3910,418 @@ program define IndustryFrequency
 
 end
 
-program define PierreOutput
+program define PaperOutput
+
+	/*
+	*** Chart establishment creation versus net establishments
+	foreach version of numlist 1 2 {
+		if `version' == 1 {
+			local filename $dir/Data/Firms/bds_f_agesz_release.csv
+			local title "Entry versus Net Change with 1-4 employees (US)"
+			local graphfile "$dir/tmp/est_net_US"
+		}
+		else {
+			local filename $dir/Data/Firms/bds_f_agesz_st_release.csv
+			local title "Firms vs Establishments with 1-4 employees (MA)"
+			local graphfile "$dir/tmp/est_net_MA"
+		}
+			
+		import delimited `filename', varnames(1) clear
+		capture: keep if state == 25
+		capture: drop state
+		drop job* *_rate net_* *emp	
+		replace fsize = regexr(fsize, "[^_]*\) ", "")
+		replace fage = regexr(fage, "[^_]*\) ", "")
+		* keep if inlist(fage, "0", "1")
+		keep if fsize == "1 to 4"
+		bysort year: egen total_estabs = total(estabs)
+		bysort year: egen total_entry = total(estabs_entry)
+		keep if fage == "0"
+		tsset year
+		gen diff_small_est = D.total_estabs
+		
+		graph twoway ///
+			(scatter total_entry year, msymbol(+)) ///
+*			(scatter estabs_entry year, msymbol(o)) ///
+			(scatter diff_small_est year, msymbol(X)) ///
+*			, title(`title') ytitle(Count) xtitle(Year) legend(order(1 2 3) label(1 "New Entry") label(2 "New Entry w/o Prior") label(3 "Change in Establishments"))
+			, title(`title') ytitle(Count) xtitle(Year) legend(order(1 2 3) label(1 "New Entry") label(2 "Change in Establishments"))
+		graph2tex, epsfile(`graphfile')	
+
+	}
+	
+	*** Chart firm totals versus establishment totals
+	foreach version of numlist 1 2 {
+		if `version' == 1 {
+			local filename $dir/Data/Firms/bds_f_agesz_release.csv
+			local title "Firms vs Establishments with 1-4 employees (US)"
+			local graphfile "$dir/tmp/firm_est_US"
+		}
+		else {
+			local filename $dir/Data/Firms/bds_f_agesz_st_release.csv
+			local title "Firms vs Establishments with 1-4 employees (MA)"
+			local graphfile "$dir/tmp/firm_est_MA"
+		}
+		
+		import delimited `filename', varnames(1) clear
+		* should fail for US
+		capture: keep if state == 25
+		replace fsize = regexr(fsize, "[^_]*\) ", "")
+		keep if fsize == "1 to 4"
+		ren year2 year
+		bysort year: egen total_firms = total(firms)
+		bysort year: egen total_estabs = total(estabs)
+		bysort year: keep if _n == 1
+
+		graph twoway ///
+			(scatter total_firms year, msymbol(+)) ///
+			(scatter total_estabs year, msymbol(X)) ///
+			, title(`title') ytitle(Count) xtitle(Year) legend(order(1 2) label(1 "Firms") label(2 "Establishments"))
+		graph2tex, epsfile(`graphfile')	
+
+	}
+
+	*** Construction example chart
+	use $dir/tmp/nonemployed.dta, clear
+	drop if inlist(naics, 62, 95, 99)
+	drop if year < 2000
+	ren small ne_est	
+	keep ne_est stcode cntycd naics year	
+	keep if naics == 23
+	keep if stcode == 25
+	bysort year: egen total_ne = total(ne_est)
+	bysort year: keep if _n == 1	
+	
+	graph twoway ///
+		(scatter total_ne year, msymbol(+)) ///
+		, title("Construction in MA") ytitle(Nonemployers) xtitle(Year) ///
+		  xlabel(2000(4)2012) ylabel(50000(5000)65000)
+	graph2tex, epsfile($dir/tmp/construction)
+
+	*** Building dataset used for state level table
+
+	use $dir/tmp/nonemployed.dta, clear
+	drop if naics == 62
+	drop if year < 2000
+	tsset, clear
+	bysort stcode cntycd year: egen ne_est = total(small)
+	by stcode cntycd year: keep if _n == 1
+	keep ne_est stcode cntycd year	
+	save $dir/tmp/ne_tmp.dta, replace
+	
+	use $dir/tmp/countyBusiness.dta, clear
+	drop if naics == 62
+	bysort stcode cntycd year: egen emp_est = total(small)
+	by stcode cntycd year: keep if _n == 1
+	* no equivilant state wide data exists in other datasets
+	drop if cntycd == 999
+	keep emp_est stcode cntycd year
+	save $dir/tmp/emp_tmp.dta, replace
+
+	use "$dir/tmp/Employment.dta", clear
+	keep stcode cntycd year self_employed
+	drop if year == 2013
+	merge 1:1 stcode cntycd year using $dir/tmp/ne_tmp.dta
+	count if _merge != 3 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge
+	merge 1:1 stcode cntycd year using $dir/tmp/emp_tmp.dta
+	count if _merge != 3 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge
+	
+	bysort stcode year: egen total_ne = total(ne_est)
+	bysort stcode year: egen total_em = total(emp_est)
+	bysort stcode year: egen total_se = total(self_employed)
+	bysort stcode year: keep if _n == 1
+	replace cntycd = 0
+	drop ne_est emp_est self_employed
+
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+	
+	egen panel =  group(stcode cntycd)
+	tsset panel year
+	
+	sort panel year	
+	gen se_pop = total_se / population
+	gen em_pop = total_em / population
+	gen ne_pop = total_ne / population
+	gen diff_se_pop = D.se_pop
+	gen diff_em_pop = D.em_pop
+	gen diff_ne_pop = D.ne_pop
+
+	* Covariates used for matching the synthetic controls
+
+	* all the covariates are for a single year independant so should be safe to just generate
+	* matches for a single year as the 'treatment' group
+	
+	* income per capita (GDP) 
+	rename year year_tmp
+	gen year = 2006
+	merge n:1 stcode year using "$dir/tmp/MedianIncomeState.dta"
+	drop year
+	rename year_tmp year
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+	gen log_income = log(income)
+	drop(income)
+
+	* percent aged 20-24 or so since MA has a lot of universities
+	* child dependancy ratio
+	* this is currently using 2000 year data
+	merge n:1 stcode cntycd using "$dir/tmp/ageGroup.dta"
+	count if _merge == 1
+	* assert(r(N)==0)
+	bysort panel: egen error = total(_merge == 1)
+	drop if error
+	drop error	
+	drop if _merge == 2
+	drop _merge
+	
+	* percent with healthcare
+	* using 2005 data
+	merge n:1 stcode cntycd using "$dir/tmp/insurance.dta"
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+
+	* urban population
+	* using 2000 year data
+	merge n:1 stcode cntycd using "$dir/tmp/urban.dta"
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+		
+	drop cntycd geo* vd*
+	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
+
+	file open BASIC_SUMMARY using $dir/tmp/basic_summary.tex, write replace
+	file write BASIC_SUMMARY "\begin{tabular}{lrr} \hline \hline" _n
+	file write BASIC_SUMMARY "& Massachusetts  & Other New England  \\  \hline" _n
+
+	su population if stcode == 25 & year == 2007
+	local ma = r(sum) * 1000000
+	su population if stcode != 25 & year == 2007
+	local ne = r(sum) * 1000000
+	file write BASIC_SUMMARY "Population &" %12.0fc (`ma') " & " %12.0fc (`ne') " \\" _n
+	su percent_urban if stcode == 25
+	local ma = r(mean) * 100
+	su percent_urban if stcode != 25
+	local ne = r(mean) * 100
+	file write BASIC_SUMMARY "Percent Urban & " %12.2f (`ma') "\% & " %12.2f (`ne') "\% \\" _n
+	su percent_uninsured if stcode == 25
+	local ma = r(mean)
+	su percent_uninsured if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Percent Uninsured & " %12.2f (`ma') "\% & " %12.2f (`ne') "\% \\" _n
+	su percent_20_to_24 if stcode == 25
+	local ma = r(mean)
+	su percent_20_to_24 if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Percent Aged 20 to 24 & " %12.2f (`ma') "\% & " %12.2f (`ne') "\% \\" _n
+	su percent_household if stcode == 25
+	local ma = r(mean)
+	su percent_household if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Percent of Households with Children & " %12.2f (`ma') "\% & " %12.2f (`ne') "\% \\" _n
+
+	file write BASIC_SUMMARY "\hline \textbf{Self-Employment} & & \\" _n
+	su total_se if stcode == 25 & year == 2007
+	local ma = r(sum)
+	su total_se if stcode != 25 & year == 2007
+	local ne = r(sum)
+	file write BASIC_SUMMARY "Number & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+	su se_pop if stcode == 25
+	local ma = r(mean)
+	su se_pop if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Per Million People & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+	su diff_se_pop if stcode == 25
+	local ma = r(mean)
+	su diff_se_pop if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Yearly Change per Million People & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+
+	file write BASIC_SUMMARY "\hline \textbf{Non-Employers} & & \\" _n
+	su total_ne if stcode == 25 & year == 2007
+	local ma = r(sum)
+	su total_ne if stcode != 25 & year == 2007
+	local ne = r(sum)
+	file write BASIC_SUMMARY "Number & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+	su ne_pop if stcode == 25
+	local ma = r(mean)
+	su ne_pop if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Per Million People & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+	su diff_ne_pop if stcode == 25
+	local ma = r(mean)
+	su diff_ne_pop if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Yearly Change per Million People & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+
+	file write BASIC_SUMMARY "\hline \textbf{Establishments with 1-4 Workers} & & \\" _n
+	su total_em if stcode == 25 & year == 2007
+	local ma = r(sum)
+	su total_em if stcode != 25 & year == 2007
+	local ne = r(sum)
+	file write BASIC_SUMMARY "Number & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+	su em_pop if stcode == 25
+	local ma = r(mean)
+	su em_pop if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Per Million People & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+	su diff_em_pop if stcode == 25
+	local ma = r(mean)
+	su diff_em_pop if stcode != 25
+	local ne = r(mean)
+	file write BASIC_SUMMARY "Yearly Change per Million People & " %12.0fc (`ma') " & " %12.0fc (`ne') "\\" _n
+
+	file write BASIC_SUMMARY " \hline \hline \end{tabular}" _n
+	file close BASIC_SUMMARY
+
+	*/
+	
+	*** Now running proposition 1, have state but no industries
+	
+	use $dir/tmp/nonemployed.dta, clear
+	drop if naics == 62
+	drop if year < 2000
+	tsset, clear
+	bysort stcode cntycd year: egen ne_est = total(small)
+	by stcode cntycd year: keep if _n == 1
+	keep ne_est stcode cntycd year	
+	save $dir/tmp/ne_tmp.dta, replace
+	
+	use $dir/tmp/countyBusiness.dta, clear
+	drop if naics == 62
+	bysort stcode cntycd year: egen emp_est = total(small)
+	by stcode cntycd year: keep if _n == 1
+	* no equivilant state wide data exists in other datasets
+	drop if cntycd == 999
+	keep emp_est stcode cntycd year
+	save $dir/tmp/emp_tmp.dta, replace
+
+	use "$dir/tmp/Employment.dta", clear
+	keep stcode cntycd year self_employed
+	drop if year == 2013
+	merge 1:1 stcode cntycd year using $dir/tmp/ne_tmp.dta
+	count if _merge != 3 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge
+	merge 1:1 stcode cntycd year using $dir/tmp/emp_tmp.dta
+	count if _merge != 3 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge
+	
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+	
+	egen panel =  group(stcode cntycd)
+	tsset panel year
+	
+	sort panel year	
+	gen se_pop = self_employed / population
+	gen em_pop = emp_est / population
+	gen ne_pop = ne_est / population
+	gen diff_se_pop = D.se_pop
+	gen diff_em_pop = D.em_pop
+	gen diff_ne_pop = D.ne_pop
+
+	local treatment_start 2007
+	gen treatment = stcode == 25 & year >= `treatment_start'
+
+	eststo DD_SE: xtreg diff_se_pop treatment ib2007.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	estadd local co "New England" 
+	estadd local cl "County"
+	eststo DD_NE: xtreg diff_ne_pop treatment ib2007.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	estadd local co "New England" 
+	estadd local cl "County"
+	eststo DD_EM: xtreg diff_em_pop treatment ib2007.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	estadd local co "New England" 
+	estadd local cl "County"
+
+	esttab _all using $dir/tmp/prop1.tex, ///
+		mtitles("Self-Employed" "Non-Employers" "1-4 Worker Establishments")   ///
+		keep("Massachusetts $\times$ Post 2007")  ///
+		rename(treatment "Massachusetts $\times$ Post 2007") ///
+		title("Impact of Massachusetts Health Reform on Entrepeneurship") ///
+		nobaselevels nonumbers replace compress se r2 scalar("F F-test" "N_g Groups" "w Weight" "cl Cluster" "co Control") ///
+		indicate("Year FE = *.year" "County FE = *.panel") ///
+		sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001)	
+	eststo clear
+
+	* Covariates used for matching the synthetic controls
+
+	* all the covariates are for a single year independant so should be safe to just generate
+	* matches for a single year as the 'treatment' group
+	
+	* income per capita (GDP) 
+	rename year year_tmp
+	gen year = 2006
+	merge n:1 stcode year using "$dir/tmp/MedianIncomeState.dta"
+	drop year
+	rename year_tmp year
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+	gen log_income = log(income)
+	drop(income)
+
+	* percent aged 20-24 or so since MA has a lot of universities
+	* child dependancy ratio
+	* this is currently using 2000 year data
+	merge n:1 stcode cntycd using "$dir/tmp/ageGroup.dta"
+	count if _merge == 1
+	* assert(r(N)==0)
+	bysort panel: egen error = total(_merge == 1)
+	drop if error
+	drop error	
+	drop if _merge == 2
+	drop _merge
+	
+	* percent with healthcare
+	* using 2005 data
+	merge n:1 stcode cntycd using "$dir/tmp/insurance.dta"
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+
+	* urban population
+	* using 2000 year data
+	merge n:1 stcode cntycd using "$dir/tmp/urban.dta"
+	count if _merge == 1
+	assert(r(N)==0)
+	drop if _merge == 2
+	drop _merge
+
+
+	
+
 
 	/*
 	*** create naics captial table
@@ -3995,77 +4406,6 @@ program define PierreOutput
 	destring naicscode numberoffirms*, replace
 	rename naicscode naics
 	
-	*/
-	
-	
-	*** Chart establishment creation versus net establishments
-	foreach version of numlist 1 2 {
-		if `version' == 1 {
-			local filename $dir/Data/Firms/bds_f_agesz_release.csv
-			local title "Entry versus Net Change with 1-4 employees (US)"
-			local graphfile "$dir/tmp/est_net_US"
-		}
-		else {
-			local filename $dir/Data/Firms/bds_f_agesz_st_release.csv
-			local title "Firms vs Establishments with 1-4 employees (MA)"
-			local graphfile "$dir/tmp/est_net_MA"
-		}
-			
-		import delimited `filename', varnames(1) clear
-		capture: keep if state == 25
-		capture: drop state
-		drop job* *_rate net_* *emp	
-		replace fsize = regexr(fsize, "[^_]*\) ", "")
-		replace fage = regexr(fage, "[^_]*\) ", "")
-		* keep if inlist(fage, "0", "1")
-		keep if fsize == "1 to 4"
-		bysort year: egen total_estabs = total(estabs)
-		bysort year: egen total_entry = total(estabs_entry)
-		keep if fage == "0"
-		tsset year
-		gen diff_small_est = D.total_estabs
-		
-		graph twoway ///
-			(scatter total_entry year, msymbol(+)) ///
-*			(scatter estabs_entry year, msymbol(o)) ///
-			(scatter diff_small_est year, msymbol(X)) ///
-*			, title(`title') ytitle(Count) xtitle(Year) legend(order(1 2 3) label(1 "New Entry") label(2 "New Entry w/o Prior") label(3 "Change in Establishments"))
-			, title(`title') ytitle(Count) xtitle(Year) legend(order(1 2 3) label(1 "New Entry") label(2 "Change in Establishments"))
-		graph2tex, epsfile(`graphfile')	
-
-	}
-	
-	*** Chart firm totals versus establishment totals
-	foreach version of numlist 1 2 {
-		if `version' == 1 {
-			local filename $dir/Data/Firms/bds_f_agesz_release.csv
-			local title "Firms vs Establishments with 1-4 employees (US)"
-			local graphfile "$dir/tmp/firm_est_US"
-		}
-		else {
-			local filename $dir/Data/Firms/bds_f_agesz_st_release.csv
-			local title "Firms vs Establishments with 1-4 employees (MA)"
-			local graphfile "$dir/tmp/firm_est_MA"
-		}
-		
-		import delimited `filename', varnames(1) clear
-		* should fail for US
-		capture: keep if state == 25
-		replace fsize = regexr(fsize, "[^_]*\) ", "")
-		keep if fsize == "1 to 4"
-		ren year2 year
-		bysort year: egen total_firms = total(firms)
-		bysort year: egen total_estabs = total(estabs)
-		bysort year: keep if _n == 1
-
-		graph twoway ///
-			(scatter total_firms year, msymbol(+)) ///
-			(scatter total_estabs year, msymbol(X)) ///
-			, title(`title') ytitle(Count) xtitle(Year) legend(order(1 2) label(1 "Firms") label(2 "Establishments"))
-		graph2tex, epsfile(`graphfile')	
-
-	}
-	
 	*** next take a look at infogroup data
 	use $dir/tmp/infogroup_all.dta, clear
 	bysort year: egen firm_entry = total(newFirms)
@@ -4099,78 +4439,8 @@ program define PierreOutput
 
 	*** now do the state and county diff-diff without any industry data
 	
-	* first create each dataset with the variable of interest
-	use $dir/tmp/nonemployed.dta, clear
-	drop if naics == 62
-	drop if year < 2000
-	tsset, clear
-	bysort stcode cntycd year: egen ne_est = total(small)
-	by stcode cntycd year: keep if _n == 1
-	keep ne_est stcode cntycd year	
-	save $dir/tmp/ne_tmp.dta, replace
 	
-	use $dir/tmp/countyBusiness.dta, clear
-	rename naics_2 naics
-	drop if missing(naics)
-	drop if naics == 62
-	bysort stcode cntycd year: egen emp_est = total(n1_4)
-	by stcode cntycd year: keep if _n == 1
-	* no equivilant state wide data exists in other datasets
-	drop if cntycd == 999
-	keep emp_est stcode cntycd year
-	save $dir/tmp/emp_tmp.dta, replace
-
-	use "$dir/tmp/Employment.dta", clear
-	keep stcode cntycd year self_employed
-	drop if year == 2013
-	merge 1:1 stcode cntycd year using $dir/tmp/ne_tmp.dta
-	count if _merge != 3 & stcode == 25
-	assert(r(N)==0)
-	keep if _merge == 3
-	drop _merge
-	merge 1:1 stcode cntycd year using $dir/tmp/emp_tmp.dta
-	count if _merge != 3 & stcode == 25
-	assert(r(N)==0)
-	keep if _merge == 3
-	drop _merge
-
-	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
-	* ignoring counties in Virgina and Florida that don't show up here
-	* https://www.census.gov/geo/reference/codes/cou.html
-	count if _merge == 1 & stcode == 25
-	assert(r(N)==0)
-	keep if _merge == 3
-	drop _merge					
-	* for better readability dividing population by one million
-	replace population = population / 1000000
 	
-	egen panel =  group(stcode cntycd)
-	tsset panel year
-	tsfill, full	
-	bysort panel: egen stcode_tmp = mean(stcode)
-	drop stcode
-	rename stcode_tmp stcode
-	bysort panel: egen cntycd_tmp = mean(cntycd)
-	drop cntycd
-	rename cntycd_tmp cntycd	
-	replace self_employed = 0 if missing(self_employed)
-	replace emp_est = 0 if missing(emp_est)
-	replace ne_est = 0 if missing(ne_est)
-	
-	sort panel year	
-	gen se_pop = self_employed / population
-	gen em_pop = emp_est / population
-	gen ne_pop = ne_est / population
-	gen diff_se_pop = D.se_pop
-	gen diff_em_pop = D.em_pop
-	gen diff_ne_pop = D.ne_pop
-
-	* gen control = inlist(stcode, 9, 23, 25, 33, 44, 50)
-	gen treatment = stcode == 25 & year > 2007
-
-	save $dir/tmp/all_states_tmp.dta, replace
-	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
-
 	* create weights
 	gen weight_tmp = population if year == 2008
 	bysort panel: egen weight = mean(weight_tmp)
@@ -4235,52 +4505,7 @@ program define PierreOutput
 	* need to reload the dataset since earlier we dropped non-new england states
 	eststo clear
 	use $dir/tmp/all_states_tmp.dta, clear
-	
-	* Covariates used for matching the synthetic controls
 
-	* all the covariates are for a single year independant so should be safe to just generate
-	* matches for a single year as the 'treatment' group
-	
-	* income per capita (GDP) 
-	rename year year_tmp
-	gen year = 2006
-	merge n:1 stcode year using "$dir/tmp/MedianIncomeState.dta"
-	drop year
-	rename year_tmp year
-	count if _merge == 1
-	assert(r(N)==0)
-	drop if _merge == 2
-	drop _merge
-	gen log_income = log(income)
-	drop(income)
-
-	* percent aged 20-24 or so since MA has a lot of universities
-	* child dependancy ratio
-	* this is currently using 2000 year data
-	merge n:1 stcode cntycd using "$dir/tmp/ageGroup.dta"
-	count if _merge == 1
-	* assert(r(N)==0)
-	bysort panel: egen error = total(_merge == 1)
-	drop if error
-	drop error	
-	drop if _merge == 2
-	drop _merge
-	
-	* percent with healthcare
-	* using 2005 data
-	merge n:1 stcode cntycd using "$dir/tmp/insurance.dta"
-	count if _merge == 1
-	assert(r(N)==0)
-	drop if _merge == 2
-	drop _merge
-
-	* urban population
-	* using 2000 year data
-	merge n:1 stcode cntycd using "$dir/tmp/urban.dta"
-	count if _merge == 1
-	assert(r(N)==0)
-	drop if _merge == 2
-	drop _merge
 
 	keep treatment year panel diff_se_pop diff_em_pop diff_ne_pop stcode cntycd log_income percent_uninsured percent_20_to_24 percent_urban
 
@@ -4673,7 +4898,7 @@ program define PierreOutput
 
 	}
 	*/
-
+	
 	*** Now running NAICS 4 synth diff-diff
 	eststo clear
 	use $dir/tmp/nonemployedLong.dta, clear
@@ -4798,7 +5023,7 @@ program define PierreOutput
 	local MA 25
 	local maxEstimatesPerTable 5
 			
-	foreach y_variable of varlist diff_ne_pop { // diff_em_pop {
+	foreach y_variable of varlist diff_em_pop { // diff_ne_pop {
 	
 		gen `y_variable'Beta = .
 	
@@ -4857,7 +5082,14 @@ program define PierreOutput
 						`y_variable'(2001) `y_variable'(2002) `y_variable'(2003) `y_variable'(2004) `y_variable'(2005) `y_variable'(2006) `y_variable'(2007) ///
 						log_income percent_20_to_24 percent_urban percent_uninsured ///
 						, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
-						keep("$dir/tmp/synth_`county'_`industry'_`y_variable'") replace				
+						keep("$dir/tmp/synth_`county'_`industry'_`y_variable'") replace	
+					
+					* sometimes we have fewer controls than years which causes merge to 
+					* fail later because there are multiple missing _Co_Number values
+					* due to the way synth saves its output
+					use $dir/tmp/synth_`county'_`industry'_`y_variable', clear			
+					drop if missing(_Co)
+					save $dir/tmp/synth_`county'_`industry'_`y_variable', replace
 											
 					restore
 				}
@@ -4871,6 +5103,8 @@ program define PierreOutput
 			replace panel = -panel if d == 1
 			replace `y_variable' = . if d == 1
 			replace stcode = 0 if d == 1
+			
+			replace treatment = 0 if stcode == 0
 			
 			gen _Co_Number = panel
 			
@@ -4988,7 +5222,7 @@ program define PierreOutput
 	
 end
 
-PierreOutput
+PaperOutput
 //StateDiff
 //MatchingState
 //SummaryStats_NaicsLoop_4
