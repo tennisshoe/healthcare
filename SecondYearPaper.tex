@@ -55,7 +55,7 @@ The above quote suggests health insurance reform would have a greater impact on 
 
 In this paper we explore how enterprises are affected by access to health care. We contribute to the literature in two ways. We first present simple models that suggest capital intensity and non-profit status should create heterogeneity in outcomes by industry. We then test those model predictions using the 2006 Massachusetts health reform as a natural experiment. Our results complement previous research by suggesting that even if the propensity to become self-employed increases, access to health care may not matter much for the wider economy. We do not find evidence that access to health care increases firm creation.  
 
-The rest of the article proceeds as follows. Section \ref{sec:review} provides an overview of the previous research done in this area. Section \ref{sec:reform} describes the Massachusetts health reform we use as a policy shock. Section \ref{sec:data} describes the data sources we use in our analysis. Section \ref{sec:model} outlines a model that considers how the reform should heterogeneously affect entrepreneurship by industry. Section \ref{sec:results} presents the effects of the reform on entrepreneurship and Section \ref{sec:conclude} concludes. 
+The rest of the article proceeds as follows. Section \ref{sec:review} provides an overview of the previous research done in this area. Section \ref{sec:reform} describes the Massachusetts health reform we use as a policy shock. Section \ref{sec:model} outlines a model that considers how the reform should heterogeneously affect entrepreneurship by industry. Section \ref{sec:data} describes the data sources we use in our analysis. Section \ref{sec:results} presents the effects of the reform on entrepreneurship and Section \ref{sec:conclude} concludes. 
 
 \section{Literature Review}
 \label{sec:review}
@@ -117,6 +117,63 @@ There is also a tangible cost to entrepreneurs when universal health care is pro
 
 From an entrepreneurial standpoint, we view the act as having improved the health insurance marketplace for self-employed residents. We are agnostic to the mechanism. One possibility is the lower cost of insurance; Gruber \cite{gruber} suggests that controlling for plans with lower benefits, the cost of individual insurance plans dropped by 20\% as a results of the reforms. Other potential mechanisms include the ability to sign up for plans with pre-existing conditions and greater confidence in keeping insurance conditional on becoming sick. We consider the act as an exogenous shock on entrepreneurship outside of the healthcare industry since the passage of the act was not driven by entrepreneurial activity in Massachusetts. We use the period starting in 2008 as the treatment period for the shock since the law's main effect of lowering the uninsured rate was observed in 2008. 
 
+\section{Theoretical Motivation}
+\label{sec:model}
+
+We will use this empirical context to test four propositions. First, building on Gruber and Madrain \cite{gm2002}, consider a compensating differential model of a worker that currently has health care through their job but expects to be unable to attain health care as an entrepreneur. Utility is a function of both earnings and a binary indicator of health insurance coverage. Workers stay at the firm as long as employed wages $w$ and the return to entrepreneurship $r$ as such that
+$$U(w,1) \ge U(r,0)$$
+
+If there is a shock that creates a market for non-group health insurance at cost $c$, the worker will stay as long as
+$$U(w,1) \ge \max\{U(r,0),U(r-c,1)\}$$
+
+This should shift some mass of workers to become entrepreneurs as long as some workers value health insurance more than the cost on the non-group health market and for those workers
+
+$$U(w,1) < U(r-c,1)$$
+
+So this model would predict that the health-care shock increases entrepreneurship. 
+
+\textbf{Proposition 1:} 
+Improving access to health-care should increase entrepreneurship. 
+
+However, the reform in Massachusetts also involved changes to the taxes, including the use of general revenue funds to pay for subsidies and penalties for firms that did not provide health care to workers. In 2013, 30\% of the Massachusetts budget was spent on the Mass Health \cite{masshealth} subsidy program. This may have affected the expected  return $r$ to self-employment conditional on creating a successful firm. For example, entrepreneurs could believe the health care subsidies would eventually be paid for by a progressive tax on earnings.
+
+This could be viewed as a mitigating the effect of the shock on self-employment. Now workers will leave if taxes $t$ are such that
+
+$$U(w,1) < U(r(1-t)-c,1)$$
+
+These expectations should affect non-profit firms differently than for-profit firms and so we should see a heterogenous effect of the shock across these two types of firms. 
+
+\textbf{Proposition 2:} 
+The health care reform package should cause a relatively larger increase in non-profit firms than for-profit firms. 
+
+Our next proposition is considers industry based heterogeneity. Suppose a potential entrepreneur is considering to start a new venture. Conditional on having an idea, factors such the perceived opportunity for the idea \cite{sorensenSorensen} and ability to attract complementary talent \cite{stuartSorensen} can impact the decision to execute the venture. We can model the probability of starting a firm as the probability of getting an idea that fits the constraints imposed by the entrepreneur. 
+
+Suppose two such constraints are the capital required to start the firm and access to healthcare  outside of employment. An idea can vary on both dimensions. Some ideas can of course require more capital to execute than others. Additionally, some ideas could be worked on without leaving existing employment. For example, survey data suggests half of all software developers create applications outside of their formal employment \cite{evans}. Also, the constraints are likely to vary by individual. Individuals vary in their social networks which can influence access to capital \cite{uzzi}. We can also imagine health care constraints varying by individual. A potential entrepreneur may be relatively less constrained by health care if her spouse's employer provided health insurance for their family. 
+
+\textbf{Proposition 3:} 
+Improving access to healthcare should increase the probability of starting a low capital firm relative to a high capital firm. 
+
+\textbf{Proof:}
+See Appendix A for a formal statement of the proposition, the required assumptions and its proof. 
+
+The intuition behind Proposition 1 can be conveyed in the single entrepreneur case using a visualization of the idea space. Suppose an entrepreneur has a level $\alpha_i$ of healthcare and level $\beta_i$ of capital to start with. The entrepreneur can then execute ideas that require at most those levels of resources. The shaded region in Figure \ref{fig:ideaSpace} represents the space of ideas executable by the entrepreneur. If we think of the healthcare reform as shifting level $\alpha_i$ to $\alpha_i'$, the striped region's set of ideas also become feasible. Note that only ideas with resource requirements lower than $\beta_i$ are affected by the shift in resource $\alpha$. As long as there is not a larger mass of potential ideas that require high capital than low capital, when we sum across all individual entrepreneurs we should see more executed ideas with low capital than high capital. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[scale=0.5]{resources/Prop1}
+	\caption{Subset of idea space executable by agent $i$ with resources $(\alpha_i,\beta_i)$ versus$(\alpha_i', \beta_i)$.}
+	\label{fig:ideaSpace}
+\end{figure}
+
+Our second proposition describes the relative short and long term affect of a health care shock. 
+
+\textbf{Proposition 4:} The relative increase in low versus high capital firms should attenuate over time. 
+
+\textbf{Proof:} See Appendix A for a formal statement and proof
+
+This follows from entrepreneurs having any memory of past ideas. Immediately after the shock, ideas in Figure \ref{fig:ideaSpace}'s striped region that occurred to the entrepreneur in the current time period as well as prior periods become feasible. In future periods, feasible ideas are only drawn from the new ideas generated by the entrepreneur that period.
+
+
 \section{Data Sources}
 \label{sec:data}
 
@@ -134,7 +191,7 @@ Our second source of data is the Census Country Business Patterns (CBP). The CBP
 
 Our third source of data is the Nonemployer Statistics series. The NS is based on tax filings. It includes self-employed individuals as well incorporated businesses and partnerships that lack employees. 
 
-Note that all three of our data sources suffer from being measurements of net rather than gross values. If  we do not obverse a change in number establishments over a period of time, this does not necessarily mean no new firms were created. No change happens when the rate of firm entrance equals the rate of firm exit. Exit and entrance are also definitional; a previously existent firm that hired its first worker would be listed as a entrant in the CBP data. Unfortunately we were not able to find a satisfactory public data set with gross establishment or firm numbers. However we think any change in the rate of entrepreneurship will still appear in our dataset. Figure \ref{fig:construct} shows how the number of nonemployers the construction industry, typically very cyclical, rose during the boom period of mid-2000 only to fall again with the 2008 recession. 
+Note that all three of our data sources suffer from being measurements of net rather than gross values. If  we do not obverse a change in number establishments over a period of time, this does not necessarily mean no new establishments were created. No change happens when the rate of establishment entrance equals the rate of firm establishment. Exit and entrance are also definitional; a previously existent firm that hired its first worker would be listed as a entrant in the CBP data and an exit in the NE data. Unfortunately we were not able to find a satisfactory public data set with gross establishment or firm numbers. However we think any change in the rate of entrepreneurship will still manifest in our dataset. To illustrate, figure \ref{fig:construct} shows how the number of nonemployers in construction, a traditionally cyclical industry. We see a rise during the boom period of mid-2000 followed by a fall after the 2008 recession. 
 
 \begin{figure}[H]
 	\centering
@@ -143,28 +200,16 @@ Note that all three of our data sources suffer from being measurements of net ra
 	\label{fig:construct}
 \end{figure}
 
+Table \ref{tab:basic} provides summary statistics for our three variables of interest in Massachusetts and other New England states from 2000 to 2012. Note that to reduce potential endogeneity we remove firms in the health care industry from our sample since our shock may have increased health related opportunities for entrepreneurs. The rest of New England is approximately similar to Massachusetts in size and establishment characteristics although Massachusetts is more urban than the rest of New England. 
 
-
-
-
-
- Table 1 provides summary means for our three variables of interest in Massachusetts and other New England states from 2000 to 2012. To reduce potential endogeneity we remove firms in the health care industry from our sample since our shock may have increased health related opportunities for entrepreneurs. 
-
-
-\begin{flushleft}
-\begin{tabular}{|p{6cm} | r | r| r| r|}
-\hline
-& \multicolumn{2}{ |c| }{Massachusetts} & \multicolumn{2}{ |c| }{Other New England}\\
-\hline
-& \multicolumn{1}{ |c| }{Prior to} & \multicolumn{1}{ |c| }{Post}  & \multicolumn{1}{ |c| }{Prior to} & \multicolumn{1}{ |c| }{Post} 	\\
-& Treatment & Treatment  & Treatment & Treatment \\
-\hline
+\begin{table}[H]
 \input{resources/basic_summary.tex}
-\hline
-\end{tabular}
-\end{flushleft}
+	\centering
+	\caption{Summary statistics for Massachusetts and other New England states}
+	\label{tab:basic}
+\end{table}
 
-The rest of New England is approximately similar to Massachusetts in size and gross establishment characteristics. The summary means suggest that there was a reduction in net entrepreneurial activity across New England after the time of the health care shock. Before 2008, about 600 net new entrepreneurial firms were recorded in Massachusetts per year. From 2008 to 2012 there was on average about 1200 fewer entrepreneurial firms per year. Figure 3 provides additional detail about entrepreneurial firms by industries, illustrating that the distribution of entrepreneurship across industries is similar between Massachusetts and the rest of New England.  
+\begin{comment}
 
 \begin{figure}[H]
 	\centering
@@ -215,86 +260,21 @@ NAICS & Industry & No funding\\
 
 Finally, we use the 2012 Economic Census Industry Series for information about the concentration of non-profits per industry. The data classifies firms by whether they are exempt from federal income tax in some service industries. We exclude the subset of industries relating to health care services.
 
-\section{Theoretical Motivation}
-\label{sec:model}
-
-We will use this empirical context to test four propositions. First, building on Gruber and Madrain \cite{gm2002}, consider a compensating differential model of a worker that currently has health care through their job but expects to be unable to attain health care upon self-employment. Utility is a function of both earnings and a binary indicator of health insurance coverage. Workers stay at the firm as long as employed wages $w$ and the return to self-employment $r$ as such that
-$$U(w,1) \ge U(r,0)$$
-
-If there is a shock that creates a market for non-group health insurance at cost $c$, the worker will stay as long as
-$$U(w,1) \ge \max\{U(r,0),U(r-c,1)\}$$
-
-This should shift some mass of workers to become self-employed as long as some workers value health insurance more than the cost on the non-group health market and for those workers
-
-$$U(w,1) < U(r-c,1)$$
-
-So this model would predict that the health-care shock increases self-employment. 
-
-\textbf{Proposition 1:} 
-Improving access to health-care should increase the self-employed workforce. 
-
-However, the reform in Massachusetts also involved changes to the taxes, including the use of general revenue funds to pay for subsidies and penalties for firms that did not provide health care to workers. In 2013, 30\% of the Massachusetts budget was spent on the Mass Health \cite{masshealth} subsidy program. This may have affected the expected  return $r$ to self-employment conditional on creating a successful firm. For example, entrepreneurs could believe the health care subsidies would eventually be paid for by a progressive tax on earnings.
-
-This could be viewed as a mitigating the effect of the shock on self-employment. Now workers will leave if taxes $t$ are such that
-
-$$U(w,1) < U(r(1-t)-c,1)$$
-
-These expectations should affect non-profit firms differently than for-profit firms and so we should see a heterogenous effect of the shock across these two types of firms. 
-
-\textbf{Proposition 2:} 
-The health care reform package should cause a relatively larger increase in non-profit firms than for-profit firms. 
-
-Our next proposition is considers industry based heterogeneity. Suppose a potential entrepreneur is considering to start a new venture. Conditional on having an idea, factors such the perceived opportunity for the idea \cite{sorensenSorensen} and ability to attract complementary talent \cite{stuartSorensen} can impact the decision to execute the venture. We can model the probability of starting a firm as the probability of getting an idea that fits the constraints imposed by the entrepreneur. 
-
-Suppose two such constraints are the capital required to start the firm and access to healthcare  outside of employment. An idea can vary on both dimensions. Some ideas can of course require more capital to execute than others. Additionally, some ideas could be worked on without leaving existing employment. For example, survey data suggests half of all software developers create applications outside of their formal employment \cite{evans}. Also, the constraints are likely to vary by individual. Individuals vary in their social networks which can influence access to capital \cite{uzzi}. We can also imagine health care constraints varying by individual. A potential entrepreneur may be relatively less constrained by health care if her spouse's employer provided health insurance for their family. 
-
-\textbf{Proposition 3:} 
-Improving access to healthcare should increase the probability of starting a low capital firm relative to a high capital firm. 
-
-\textbf{Proof:}
-See Appendix A for a formal statement of the proposition, the required assumptions and its proof. 
-
-The intuition behind Proposition 1 can be conveyed in the single entrepreneur case using a visualization of the idea space. Suppose an entrepreneur has a level $\alpha_i$ of healthcare and level $\beta_i$ of capital to start with. The entrepreneur can then execute ideas that require at most those levels of resources. The shaded region in Figure \ref{fig:ideaSpace} represents the space of ideas executable by the entrepreneur. If we think of the healthcare reform as shifting level $\alpha_i$ to $\alpha_i'$, the striped region's set of ideas also become feasible. Note that only ideas with resource requirements lower than $\beta_i$ are affected by the shift in resource $\alpha$. As long as there is not a larger mass of potential ideas that require high capital than low capital, when we sum across all individual entrepreneurs we should see more executed ideas with low capital than high capital. 
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[scale=0.5]{resources/Prop1}
-	\caption{Subset of idea space executable by agent $i$ with resources $(\alpha_i,\beta_i)$ versus$(\alpha_i', \beta_i)$.}
-	\label{fig:ideaSpace}
-\end{figure}
-
-Our second proposition describes the relative short and long term affect of a health care shock. 
-
-\textbf{Proposition 4:} The relative increase in low versus high capital firms should attenuate over time. 
-
-\textbf{Proof:} See Appendix A for a formal statement and proof
-
-This follows from entrepreneurs having any memory of past ideas. Immediately after the shock, ideas in Figure \ref{fig:ideaSpace}'s striped region that occurred to the entrepreneur in the current time period as well as prior periods become feasible. In future periods, feasible ideas are only drawn from the new ideas generated by the entrepreneur that period.
+\end{comment}
 
 \section{Empirical Results}
 \label{sec:results}
 
-In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability an individual becomes an entrepreneur. Since we do not observe new firm creation, here we use the yearly number of net new small establishments per million people as a proxy for the probability of entrepreneurship. In some of our specifications, we measure this by county ($NewNew_{ct}$) while in others we measure rates per 2 or 4 digit NAICS industry by county ($NewNew_{cit}$). This identification strategy mixes both firm starts and firm failures, so any results speak to the impact of the health care reform both on the ability for entrepreneurs to start new businesses as well as keep existing firms afloat. Table 1 provides summary statistics for the variables of interest across the treatment and control groups used in our empirics. 
-\begin{flushleft}
-\begin{table}[H]
-	\centering
-	\begin{tabular}{|p{6cm} | r | r| r| r|r|}
-	\hline
-	\input{resources/long_summary.tex}
-	\hline
-	\end{tabular}
-	\caption{Estimation Summary Statistics}
-\end{table}
-\end{flushleft}
+In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability an individual becomes an entrepreneur. Given the constraints of our dataset, we focus on the change in our variables of interest per million people. In some of our specifications, we measure this per county ($Change_{ct}$) while in others we measure rates per 2 or 4 digit NAICS industry by county ($Change_{cit}$). 
 
-\subsection{General Impact}
+\subsection{Overall Impact}
 
-To test the first proposition, we apply a diff-in-diff approach with counties in Massachusetts as the control group and counties in the rest of New England as control.
+To test Proposition 1, we first apply a diff-in-diff approach with counties in Massachusetts as the control group and counties in the rest of New England as control. If the reform improved the return to entrepreneurship for some workers, our treatment indicator should be positive. 
 \begin{align}
-NetNew_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
+Change_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
 \end{align}
 
-Here $NetNew_{ct}$ represents the number of net new small establishments created per 1,000,000 residents in year $t$ and county $c$. The model includes fixed effects for year ($\delta$) and county ($\alpha$). We calculate robust standard errors clustered on county and weigh each county by its population at the start of the treatment. Figure 5a shows the difference between the control and treatment groups over the period of interest conditional on the fixed effects. Model (1) is estimated in Table 2\footnote{Robust standard errors clustered on county used under a fixed effect model. Panel series observations weighted by 2008 population. Census county business used to determine number of establishments of 1 to 4 employees by county from 2000 to 2008 for 2 digit NAICS other than 95, 99 and 62. Establishments marked as state wide dropped due to weighting ambiguity. New England considered to be Connecticut, Maine, New Hampshire, Rhode Island, Vermont and Massachusetts. } . 
+Here $Change_{ct}$ represents the change in our variable of interest per million residents in year $t$ and county $c$. The model includes fixed effects for year ($\delta$) and county ($\alpha$). We calculate robust standard errors clustered on county and weigh each county by its population at the start of the treatment. Figure 5a shows the difference between the control and treatment groups over the period of interest conditional on the fixed effects. Model (1) is estimated in Table 2\footnote{Robust standard errors clustered on county used under a fixed effect model. Panel series observations weighted by 2008 population. Census county business used to determine number of establishments of 1 to 4 employees by county from 2000 to 2008 for 2 digit NAICS other than 95, 99 and 62. Establishments marked as state wide dropped due to weighting ambiguity. New England considered to be Connecticut, Maine, New Hampshire, Rhode Island, Vermont and Massachusetts. } . 
 
 \begin{figure}[H]
 	\centering
