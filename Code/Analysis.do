@@ -117,7 +117,7 @@ end
 
 
 program define GraphPoint
-	args y_variable base title 
+	args y_variable base title filename
 
 	tempvar temp_year temp_beta temp_lower temp_upper
 
@@ -155,8 +155,8 @@ program define GraphPoint
 		(rarea `temp_upper' `temp_lower' `temp_year', color(gs12) fintensity(inten50) xline(`line', lcolor(black))) ///
 		(line `temp_beta' `temp_year', lcolor(midblue) lpattern(dash)) ///
 		(scatter `temp_beta' `temp_year', mcolor(midblue)) ///
-		, title(`title') ytitle(Residual rate of new firms) yscale(titlegap(3)) ylabel(, labsize(small)) xtitle(Year) xlabel(2001 2004 2008 2012, labsize(small)) legend(order(1 3) label(3 "Treatment X Year Estimate") label(1 "Confidence Interval") cols(1) size(small)) graphregion(fcolor(dimgray))
-	graph2tex, epsfile("$dir/tmp/graphpoint`title'")	
+		, title(`title') ytitle(Residual rate of new firms) yscale(titlegap(3)) ylabel(, labsize(small)) xtitle(Year) xlabel(2001 2004 2008 2012, labsize(small)) legend(order(1 3) label(3 "Treatment X Year Estimate") label(1 "Confidence Interval") cols(1) size(small)) graphregion(fcolor(dimgray))		
+	graph2tex, epsfile("$dir/tmp/graphpoint`filename'")	
 		
 	drop `temp_year' `temp_beta' `temp_lower' `temp_upper'
 
@@ -4250,27 +4250,47 @@ program define PaperOutput
 	gen diff_em_pop = D.em_pop
 	gen diff_ne_pop = D.ne_pop
 
-	local treatment_start 2007
-	gen treatment = stcode == 25 & year >= `treatment_start'
+	local base_year 2007
+	gen treatment = stcode == 25 & year > `base_year'
 
-	eststo DD_SE: xtreg diff_se_pop treatment ib2007.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	eststo DD_SE: xtreg diff_se_pop treatment ib`base_year'.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
 	estadd local co "New England" 
 	estadd local cl "County"
-	eststo DD_NE: xtreg diff_ne_pop treatment ib2007.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	eststo DD_NE: xtreg diff_ne_pop treatment ib`base_year'.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
 	estadd local co "New England" 
 	estadd local cl "County"
-	eststo DD_EM: xtreg diff_em_pop treatment ib2007.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	eststo DD_EM: xtreg diff_em_pop treatment ib`base_year'.year i.panel if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
 	estadd local co "New England" 
 	estadd local cl "County"
+
+	drop treatment
 
 	esttab _all using $dir/tmp/prop1.tex, ///
-		mtitles("Self-Employed" "Non-Employers" "1-4 Worker Establishments")   ///
+		mtitles("Self-Employed" "Non-Employers" "Small Establishments")   ///
 		keep("Massachusetts $\times$ Post 2007")  ///
-		rename(treatment "Massachusetts $\times$ Post 2007") ///
-		title("Impact of Massachusetts Health Reform on Entrepeneurship") ///
-		nobaselevels nonumbers replace compress se r2 scalar("F F-test" "N_g Groups" "w Weight" "cl Cluster" "co Control") ///
+		rename(treatment "Massachusetts $\times$ Post `base_year'") ///
+		nobaselevels nonumbers replace compress se r2 scalar("F F-test" "N_g Groups" "cl Cluster" "co Control") ///
 		indicate("Year FE = *.year" "County FE = *.panel") ///
-		sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001)	
+		sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001 ***** 0.0001) ///
+		addnotes("Fixed effect model with American Community Survey providing self-employment data, Nonemployer " ///
+		 "Statistics providing establishment without employee data and County Business Patterns providing " ///
+		 "(small) establishment with 1 to 4 employee data. Establishments with 2 digit NAICS industries of " ///
+		 "95, 99 and 62 dropped. Establishments marked as state wide dropped. New England considered " ///
+		 "to be Connecticut, Maine, New Hampshire, Rhode Island, Vermont and Massachusetts.")
+
+	levelsof year, local(years)
+	foreach year of local years {
+		if `year' == `base_year' | `year' == 2000 continue
+		gen iTYear`year' = (year == `year') & (stcode == 25)
+	}
+	xtreg diff_se_pop ib`base_year'.year iTYear* if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust	
+	GraphPoint iTYear `base_year' "Self-Employed in Massachusetts versus New England" "_se_all_basic"
+	xtreg diff_ne_pop ib`base_year'.year iTYear* if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust	
+	GraphPoint iTYear `base_year' "Non-Employeers in Massachusetts versus New England" "_ne_all_basic"
+	xtreg diff_em_pop ib`base_year'.year iTYear* if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust	
+	GraphPoint iTYear `base_year' "Small establishments in Massachusetts versus New England" "_em_all_basic"	
+	drop iTYear*
+	
 	eststo clear
 
 	* Covariates used for matching the synthetic controls
@@ -4318,10 +4338,168 @@ program define PaperOutput
 	assert(r(N)==0)
 	drop if _merge == 2
 	drop _merge
+	drop geo* vd*
 
-
+	drop if year == 2000
 	
+	* set graphics off
+	local treatment 2008
+	local MA 25
+	local max_periods 12
+	
+			
+	foreach y_variable of varlist diff_se_pop diff_ne_pop diff_em_pop {
+		
+		local titles
 
+		local title "Small Establishments"
+		local graphfile "_em_synth"
+		if "`y_variable'" == "diff_ne_pop" {
+			local title "Non-Employers"
+			local graphfile "_ne_synth"
+		}
+		if "`y_variable'" == "diff_se_pop" {
+			local title "Self-Employed"
+			local graphfile "_se_synth"
+		}
+	
+		levelsof cntycd if stcode == `MA' & !missing(`y_variable'), local(counties)
+		foreach county of local counties {
+
+			* also skip if county did not have data for all years
+			count if stcode == `MA' & cntycd == `county' & !missing(`y_variable')
+			if r(N) != `max_periods' {
+				continue
+			}
+
+			preserve
+
+			* picking counties with similar predictor values
+			local max_sd 1
+			sort stcode cntycd
+			by stcode cntycd: gen tag = _n == 1
+			local predictors log_income percent_20_to_24 percent_urban percent_uninsured		
+
+			foreach predictor of varlist `predictors' {
+				* for the percentage predictors, do I model as a uniform and use p(1-p) as variance?
+				by stcode cntycd: egen st_mean = mean(`predictor')
+				su st_mean if tag
+				local max_d = `max_sd' * r(sd)
+				su st_mean if stcode == `MA' & cntycd == `county'
+				drop if st_mean >  r(mean) + `max_d' | st_mean < r(mean) - `max_d'
+				su st_mean if tag
+				drop st_mean
+			}
+			drop tag
+				
+			* drop counties that are missing our y_variable in some years
+			by stcode cntycd: egen t_variable = count(`y_variable') 
+			drop if t_variable < `max_periods' & stcode != `MA'			
+			drop t_variable
+			
+			local filename "$dir/tmp/synth_`county'_all_`y_variable'"
+			* should only be one
+			levelsof panel if stcode == `MA' & cntycd == `county', local(trunit)
+			levelsof panel if stcode != `MA', local(counit)		
+			synth `y_variable' ///
+				`y_variable'(2001) `y_variable'(2002) `y_variable'(2003) `y_variable'(2004) `y_variable'(2005) `y_variable'(2006) `y_variable'(2007) ///
+				log_income percent_20_to_24 percent_urban percent_uninsured ///
+				, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
+				keep(`filename') replace	
+			
+			* sometimes we have fewer controls than years which causes merge to 
+			* fail later because there are multiple missing _Co_Number values
+			* due to the way synth saves its output
+			use `filename', clear			
+			drop if missing(_Co)
+			save `filename', replace
+									
+			restore
+		}
+		
+		* next recreate the control as separate counties
+		gen e = 2 if stcode == `MA'
+		expand e, gen(d)
+		drop e
+		su panel
+		replace panel = panel + r(max) + 1 if d == 1
+		replace `y_variable' = . if d == 1
+		replace stcode = 0 if d == 1
+		
+		gen _Co_Number = panel
+		
+		levelsof cntycd if stcode == `MA' & !missing(`y_variable'), local(counties)
+		foreach county of local counties {
+
+			count if stcode == `MA' & cntycd == `county' & !missing(`y_variable')
+			if r(N) == 12 {							
+				display "Merging County:`county'"
+				merge n:1 _Co_Number using "$dir/tmp/synth_`county'_all_`y_variable'.dta", assert(1 3)
+				drop _Y_treated _Y_synthetic _time _merge
+
+				gen w_diff = _W_Weight * `y_variable'
+				bysort year: egen c_diff = total(w_diff)
+				replace `y_variable' = c_diff if d == 1 & stcode == 0 & cntycd == `county'
+				drop w_diff c_diff _W_Weight
+			}
+			else {
+				replace `y_variable' = . if stcode == `MA' & cntycd == `county'
+			}
+		}
+		
+		drop d _Co_Number
+		
+		gen treatment = stcode == 25 & year > `base_year'
+		capture: eststo s_`y_variable': xtreg `y_variable' treatment ib2007.year i.panel if inlist(stcode, 0,25), fe robust
+		if !inlist(_rc,0,2000,2001){
+			exit _rc
+		}
+		if _rc == 2001 {
+			display "Main: not enough observations with `y_variable'"
+		}
+		if _rc == 2000 {
+			display "Main: No observations with `y_variable'"
+		}
+		if _rc == 0 {
+			estadd local co "Synthetic" 
+			estadd local cl "County"
+		}
+		drop treatment
+
+		preserve
+		levelsof year, local(years)	
+		foreach year of local years {
+			if `year' == 2007 | `year' == 2000 continue
+			gen iTYear`year' = (year == `year') & (stcode == 25)
+		}
+		keep if inlist(stcode, 0,25)
+		capture: xtreg `y_variable' ib2007.year iTYear*, fe robust
+		if !inlist(_rc,0,2000,2001){
+			exit _rc
+		}
+		if _rc == 2000 {
+			display "Graph: No observations with `y_variable'"
+		}
+		if _rc == 2001 {
+			display "Graph: Not enough observations with `y_variable'"
+		}
+		if _rc == 0 {
+			GraphPoint iTYear 2007 `title' `graphfile'
+		}
+		restore		
+		drop if stcode == 0		
+			
+	}
+
+	esttab _all using $dir/tmp/prop1_synth.tex, ///
+		mtitles("Self-Employed" "Non-Employers" "Small Establishments")   ///
+		keep("Massachusetts $\times$ Post 2007")  ///
+		rename(treatment "Massachusetts $\times$ Post `base_year'") ///
+		nobaselevels nonumbers replace compress se r2 scalar("F F-test" "N_g Groups" "cl Cluster" "co Control") ///
+		indicate("Year FE = *.year" "County FE = *.panel") ///
+		sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001 ***** 0.0001) ///
+		addnotes("Fixed effect model with synthetic controls. US counties outside one standard deviation for any " ///
+			"obvservable excluded from control pool.")
 
 	/*
 	*** create naics captial table
@@ -5218,7 +5396,7 @@ program define PaperOutput
 		restore
 
 	}
-	
+*/	
 	
 end
 
