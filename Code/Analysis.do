@@ -4193,8 +4193,6 @@ program define PaperOutput
 	file write BASIC_SUMMARY " \hline \hline \end{tabular}" _n
 	file close BASIC_SUMMARY
 
-	*/
-	
 	*** Now running proposition 1, have state but no industries
 	
 	use $dir/tmp/nonemployed.dta, clear
@@ -4500,7 +4498,193 @@ program define PaperOutput
 		sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01 **** 0.001 ***** 0.0001) ///
 		addnotes("Fixed effect model with synthetic controls. US counties outside one standard deviation for any " ///
 			"obvservable excluded from control pool.")
+	*/
+	
+	*** Nonprofit industries with synthetic controls
+	
+	*** first for all industries and counties, generate the synthetic control files
+	foreach y_variable of varlist diff_em_pop diff_ne_pop {
 
+		if "`y_variable'" == "diff_ne_pop" {
+
+			use $dir/tmp/nonemployedLong.dta, clear
+			* get rid of the same naics industies we dropped above
+			drop if naics >= 9900 & naics < 10000
+			* above 6240 consists of things like homeless shelters, not health related
+			drop if naics >= 6200 & naics < 6240
+			drop if naics >= 9500 & naics < 9600
+			drop if year < 2000
+			ren small ne_est	
+			keep ne_est stcode cntycd naics year	
+
+			* dropping naics that MA counties do not have much of
+			bysort stcode cntycd naics: egen t_est = total(ne_est)
+			drop if t_est < 1000 & stcode == 25
+			drop t_est	
+
+		}
+		
+		if "`y_variable'" == "diff_em_pop" {
+
+			use $dir/tmp/countyBusinessLong.dta, clear
+			drop if naics >= 9900 & naics < 10000
+			drop if naics >= 6200 & naics < 6240
+			drop if naics >= 9500 & naics < 9600
+			ren small emp_est
+			drop if cntycd == 999
+			keep emp_est stcode cntycd naics year
+			bysort stcode cntycd naics: egen t_est = total(emp_est)
+			drop if t_est < 1000 & stcode == 25
+			drop t_est	
+		
+		}
+		
+		* drop naics that counties do not have for all years
+		bysort stcode cntycd naics: egen year_count = count(year)
+		drop if year_count != 12
+		drop year_count
+		
+		merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+		* ignoring counties in Virgina and Florida that don't show up here
+		* https://www.census.gov/geo/reference/codes/cou.html
+		count if _merge == 1 & stcode == 25
+		assert(r(N)==0)
+		keep if _merge == 3
+		drop _merge					
+		* for better readability dividing population by one million
+		replace population = population / 1000000	
+		
+		egen panel =  group(stcode cntycd naics)
+		tsset panel year		
+		sort panel year	
+
+		if "`y_variable'" == "diff_ne_pop" {
+			gen ne_pop = ne_est / population
+			gen diff_ne_pop = D.ne_pop
+		}
+		if "`y_variable'" == "diff_em_pop" {
+			gen em_pop = emp_est / population
+			gen diff_em_pop = D.em_pop
+		}
+		
+		rename year year_tmp
+		gen year = 2006
+		merge n:1 stcode year using "$dir/tmp/MedianIncomeState.dta"
+		drop year
+		rename year_tmp year
+		count if _merge == 1
+		assert(r(N)==0)
+		drop if _merge == 2
+		drop _merge
+		gen log_income = log(income)
+		drop(income)
+
+		* percent aged 20-24 or so since MA has a lot of universities
+		* child dependancy ratio
+		* this is currently using 2000 year data
+		merge n:1 stcode cntycd using "$dir/tmp/ageGroup.dta"
+		count if _merge == 1
+		* assert(r(N)==0)
+		bysort panel: egen error = total(_merge == 1)
+		drop if error
+		drop error	
+		drop if _merge == 2
+		drop _merge
+		
+		* percent with healthcare
+		* using 2005 data
+		merge n:1 stcode cntycd using "$dir/tmp/insurance.dta"
+		count if _merge == 1
+		assert(r(N)==0)
+		drop if _merge == 2
+		drop _merge
+
+		* urban population
+		* using 2000 year data
+		merge n:1 stcode cntycd using "$dir/tmp/urban.dta"
+		count if _merge == 1
+		assert(r(N)==0)
+		drop if _merge == 2
+		drop _merge
+
+		keep treatment naics year panel `y_variable' stcode cntycd log_income percent_uninsured percent_20_to_24 percent_urban
+		compress
+
+		drop if year == 2000
+	
+		* set graphics off
+		local treatment 2008
+		local MA 25
+				
+		levelsof naics if stcode == `MA' & !missing(`y_variable'), local(industries)
+		foreach industry of local industries {
+
+			levelsof cntycd if stcode == `MA' & naics == `industry' & !missing(`y_variable'), local(counties)
+			foreach county of local counties {
+			
+				preserve
+
+				* picking counties with similar predictor values
+				local max_sd 1
+				sort stcode cntycd
+				by stcode cntycd: gen tag = _n == 1
+				local predictors log_income percent_20_to_24 percent_urban percent_uninsured		
+
+				foreach predictor of varlist `predictors' {
+					* for the percentage predictors, do I model as a uniform and use p(1-p) as variance?
+					by stcode cntycd: egen st_mean = mean(`predictor')
+					su st_mean if tag
+					local max_d = `max_sd' * r(sd)
+					su st_mean if stcode == `MA' & cntycd == `county'
+					drop if st_mean >  r(mean) + `max_d' | st_mean < r(mean) - `max_d'
+					su st_mean if tag
+					drop st_mean
+				}
+				drop tag
+				
+				* drop counties that are missing our y_variable in some years
+				by stcode cntycd: egen t_variable = count(`y_variable') if naics == `industry'
+				su t_variable
+				drop if t_variable < r(max) & stcode != `MA'			
+				drop t_variable
+				
+				* should only be one
+				levelsof panel if stcode == `MA' & cntycd == `county' & naics == `industry', local(trunit)
+				levelsof panel if stcode != `MA' & naics == `industry', local(counit)		
+				synth `y_variable' ///
+					`y_variable'(2001) `y_variable'(2002) `y_variable'(2003) `y_variable'(2004) `y_variable'(2005) `y_variable'(2006) `y_variable'(2007) ///
+					log_income percent_20_to_24 percent_urban percent_uninsured ///
+					, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
+					keep("$dir/tmp/synth_`county'_`industry'_`y_variable'") replace	
+				
+				* sometimes we have fewer controls than years which causes merge to 
+				* fail later because there are multiple missing _Co_Number values
+				* due to the way synth saves its output
+				use $dir/tmp/synth_`county'_`industry'_`y_variable', clear			
+				drop if missing(_Co)
+				save $dir/tmp/synth_`county'_`industry'_`y_variable', replace
+										
+				restore
+			}
+		}
+
+	}
+
+
+	exit
+	
+	
+
+	merge n:1 naics using $dir/tmp/nonprofit.dta
+	* don't expect all naics to exist int he nonprofit data
+	keep if _merge == 3
+	drop _merge
+
+	gen nonprofit = (!missing(percent_nonprofit) & percent_nonprofit >= .5)
+	tab nonprofit
+	drop percent_nonprofit naicsdisplaylabel
+	
+			
 	/*
 	*** create naics captial table
 	import delimited $dir/Data/Capital/SBO_2007_00CSCB15_with_ann.csv, varnames(1) rowrange(3) clear
@@ -5076,6 +5260,8 @@ program define PaperOutput
 
 	}
 	*/
+
+	exit
 	
 	*** Now running NAICS 4 synth diff-diff
 	eststo clear
