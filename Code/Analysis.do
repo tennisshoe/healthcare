@@ -4503,7 +4503,7 @@ program define PaperOutput
 	*** Nonprofit industries with synthetic controls
 	
 	*** first for all industries and counties, generate the synthetic control files
-	foreach y_variable of varlist diff_em_pop diff_ne_pop {
+	foreach y_variable in diff_em_pop diff_ne_pop {
 
 		if "`y_variable'" == "diff_ne_pop" {
 
@@ -4541,7 +4541,7 @@ program define PaperOutput
 		
 		* drop naics that counties do not have for all years
 		bysort stcode cntycd naics: egen year_count = count(year)
-		drop if year_count != 12
+		drop if year_count != 13
 		drop year_count
 		
 		merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
@@ -4607,8 +4607,10 @@ program define PaperOutput
 		drop if _merge == 2
 		drop _merge
 
-		keep treatment naics year panel `y_variable' stcode cntycd log_income percent_uninsured percent_20_to_24 percent_urban
+		keep naics year panel `y_variable' stcode cntycd log_income percent_uninsured percent_20_to_24 percent_urban
 		compress
+		
+		save $dir/tmp/synth_`y_variable'.dta, replace
 
 		drop if year == 2000
 	
