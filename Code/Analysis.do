@@ -4650,6 +4650,8 @@ program define PaperOutput
 		
 		save $dir/tmp/synth_`y_variable'.dta, replace
 
+		save $dir/tmp/tmp_`y_variable'.dta		
+		
 		drop if year == 2000
 	
 		* set graphics off
