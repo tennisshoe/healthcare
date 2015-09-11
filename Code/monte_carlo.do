@@ -30,55 +30,63 @@ diff_se_pop with 3 lagged variables
 * with error_st = rho * error_s(t-1) + u_st and u_st ~ N(0,1)
 * error_sct defined similarly
 
-* just learned about the set obs command; should switch this
-input byte dataset
-0
-end
-
 program define generateData
 
-	keep if _n == 1
-	gen dummy = 0
-	keep dummy
-
 	local state_count = 6
+	local county_count = 11
+	local year_count = 13
+
+	clear
+	set obs 1
+
 	gen state_count = `state_count'
 	expand state_count
 	gen state = _n
 	drop state_count
 
-	local county_count = 11
 	gen county_count = `county_count'
 	expand county_count
 	bysort state: gen county = _n
 	drop county_count
 
-	local year_count = 13
 	gen year_count = `year_count'
 	expand year_count
 	bysort state county: gen year = _n + 1999
 	drop year_count
 
 	gen treatment = (state == 1 & year > 2007)
-
-	gen county_error = rnormal()
-	bysort state year: gen state_error = rnormal() if _n == 1
+	
+	* gen county_error = rnormal()
+	gen county_error = RES[1 + floor(runiform() * rowsof(RES)),1]
+	* bysort state year: gen state_error = rnormal() if _n == 1
+	bysort state year: gen state_error = RES[1 + floor(runiform() * rowsof(RES)),1] if _n == 1	
 	bysort state year: egen state_error_tmp = mean(state_error)
 	drop state_error
 	rename state_error_tmp state_error
 
+	gen rho = .
+	replace rho = RHO_TREAT[1 + floor(runiform() * rowsof(RHO_TREAT)),1] if state == 1
+	replace rho = RHO_CONTROL[1 + floor(runiform() * rowsof(RHO_CONTROL)),1] if state != 1
+	* replace rho = RHO[1 + floor(runiform() * rowsof(RHO)),1]
+	
 	egen panel = group(state county)
 	tsset panel year
-	local rho 0.95
 	gen county_residual = county_error if year == 2000
 	gen state_residual = state_error if year == 2000
 	foreach year of numlist 2001/2012 {
-		replace county_residual = (1-`rho') * county_error + `rho' * L.county_residual if year == `year'
-		replace state_residual = (1-`rho') * state_error + `rho' * L.state_residual if year == `year'
+		replace county_residual = (1-rho) * county_error + rho * L.county_residual if year == `year'
+		replace state_residual = (1-rho) * state_error + rho * L.state_residual if year == `year'
 	}
 
-	gen y = state + county + year + 0 * treatment + county_residual + state_residual
-	drop dummy *_error *_residual
+	su state
+	local mean_state = r(mean)
+	su county
+	local mean_county = r(mean)
+	su year
+	local mean_year = r(mean)
+	
+	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + 0 * treatment + county_residual + state_residual
+	drop *_error *_residual rho
 	drop if year == 2000
 
 end
@@ -124,20 +132,83 @@ program define ggn_boostrap, rclass
 	restore
 end
 
-program define custom_boostrap
-	preserve
-	gen strata = (state == 1)
-	bsample, idcluster(state_boostrap) strata(state)
-	restore
+program define generateParameters
+
+	use "$dir/tmp/Employment.dta", clear
+	keep stcode cntycd year self_employed
+	drop if year == 2013
+	
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+	
+	egen panel =  group(stcode cntycd)
+	tsset panel year
+	
+	sort panel year	
+	gen se_pop = self_employed / population
+	gen diff_se_pop = D.se_pop
+
+	drop if year == 2000
+	local base_year 2007
+	gen treatment = stcode == 25 & year > `base_year'
+	
+	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	
+	regress se_pop L.se_pop
+	regress diff_se_pop L.diff_se_pop
+	
+	bysort panel: gen nvals = _n == 1
+	count if nvals & stcode == 25
+	matrix RHO_TREAT = J(r(N),1,0)
+	count if nvals & stcode != 25
+	matrix RHO_CONTROL = J(r(N),1,0)
+	count if nvals
+	matrix RHO = J(r(N),1,0)
+	drop nvals
+	
+	levelsof panel, local(panels)
+	local iTreat 1
+	local iControl 1
+	local i 1
+	foreach panel in `panels' {
+		quietly: {
+			regress diff_se_pop L.diff_se_pop if panel == `panel'
+			count if panel == `panel' & stcode == 25
+			if(r(N) > 0) {
+				matrix RHO_TREAT[`iTreat',1] = _b[L.diff_se_pop]
+				local i_treat = `iTreat' + 1
+			}
+			else {
+				matrix RHO_CONTROL[`iControl',1] = _b[L.diff_se_pop]
+				local i_control = `iControl' + 1
+			}
+			matrix RHO[`i', 1] = _b[L.diff_se_pop]
+			local i = `i' + 1
+		}
+	}
+	
+	regress diff_se_pop L.diff_se_pop
+	predict res, rstand
+	mkmat res, matrix(RES) nomissing
+	clear
+
 end
 
-local number_trials 100
+generateParameters
+local number_trials 20
 
 tempname sim
 
 postfile `sim' OLS robust cluster ar newey bootstrap using results, replace 
 forvalues i = 1/`number_trials' {
-	quietly {
+	* quietly {
 		generateData
 		xtreg y treatment ib2007.year, fe
 		test treatment
@@ -164,48 +235,7 @@ forvalues i = 1/`number_trials' {
 		test beta
 		scalar bootstrap = (r(p) < 0.05)
 		post `sim' (OLS) (robust) (cluster) (ar) (newey) (bootstrap)
-	}
-}
-
-postclose `sim'
-use results, clear
-summarize
-
-display "Now doing y_t-y_(t-1)"
-
-postfile `sim' OLS robust cluster ar newey bootstrap using results, replace 
-forvalues i = 1/`number_trials' {
-	quietly {
-		generateData
-		gen diff_y = y - L.y
-		replace y = diff_y
-		drop diff_y
-		xtreg y treatment ib2007.year, fe
-		test treatment
-		scalar OLS = (r(p) < 0.05)
-		xtreg y treatment ib2007.year, fe robust
-		test treatment
-		scalar robust = (r(p) < 0.05)
-		xtreg y treatment ib2007.year, fe cluster(state)
-		test treatment
-		scalar cluster = (r(p) < 0.05)
-		xtregar y treatment, fe
-		test treatment
-		scalar ar = (r(p) < 0.05)
-		egen _ISC = group(state county)
-		xi: newey2 y i.state i._ISC i.year treatment, lag(3)
-		test treatment
-		scalar newey = (r(p) < 0.05)	
-		drop _I*
-		regress y i.state i.county#state ib2007.year treatment
-		scalar observed = _b[treatment]
-		local N = e(N)
-		simulate beta=r(beta), reps(100): ggn_boostrap
-		bstat, stat(observed) n(`N')
-		test beta
-		scalar bootstrap = (r(p) < 0.05)
-		post `sim' (OLS) (robust) (cluster) (ar) (newey) (bootstrap)
-	}
+	* }
 }
 
 postclose `sim'
