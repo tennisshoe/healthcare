@@ -460,11 +460,13 @@ program define runSimulationDDD
 		! qsub -N mc_`i' -b yes -j yes -wd $dir/tmp stata -b "$dir/Code/monte_carlo_map.do" `i'
 	}
 
+	/*	
 	forvalues i = 1/`number_trials'{
 		WaitForFile "$dir/tmp/mc_results`i'.don"
 		capture noisily: append using "$dir/tmp/mc_results`i'.dta"
 	}
 	summarize
+	*/
 
 end
 

@@ -1,4 +1,4 @@
-local i = 1
+local i = `1'
 set maxvar 32767
 set matsize 11000
 set more off, perm
@@ -30,13 +30,9 @@ test treatment
 scalar ar = (r(p) < 0.05)
 xi: newey2 y i.state i.county_fe i.industry i.year treatment, lag(3)
 test treatment
-scalar newey = (r(p) < 0.05)	
-regress y i.state i.county_fe i.industry ib2007.year treatment
-scalar observed = _b[treatment]
-local N = e(N)
-simulate beta=r(beta), reps(100): ggn_boostrap
-bstat, stat(observed) n(`N')
-test beta
+scalar newey = (r(p) < 0.05)
+xtreg y treatment i.year#county_fe i.year#industry, fe vce(bootstrap, reps(100) strata(state))
+test treatment
 scalar bootstrap = (r(p) < 0.05)
 post `sim' (OLS) (robust) (cluster) (ar) (newey) (bootstrap)
 
