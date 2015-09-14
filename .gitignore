@@ -7,9 +7,10 @@
 *.asv
 *.m
 *.pat
-*.~
+*.*~
 Related Research/*
 Data/*
 resources/*
 tmp/*
 Tuzemen Replication/*
+ggn-replication-kit/*
