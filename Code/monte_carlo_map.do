@@ -24,7 +24,7 @@ log using "$dir/tmp/mc_map_`i'.log", append
 use $dir/tmp/mc_`i'
 
 tempname sim
-postfile `sim' OLS robust cluster newey bootstrap using $dir/tmp/mc_results`i', replace 
+postfile `sim' OLS robust newey bootstrap using $dir/tmp/mc_results`i', replace 
 
 xtreg y treatment i.year#county_fe i.year#industry, fe
 test treatment
@@ -32,9 +32,9 @@ scalar OLS = (r(p) < 0.05)
 xtreg y treatment i.year#county_fe i.year#industry, fe robust
 test treatment
 scalar robust = (r(p) < 0.05)
-xtreg y treatment i.year#county_fe i.year#industry, fe cluster(state)
-test treatment
-scalar cluster = (r(p) < 0.05)
+* xtreg y treatment i.year#county_fe i.year#industry, fe cluster(state)
+* test treatment
+* scalar cluster = (r(p) < 0.05)
 egen i_CI = group(county_fe industry)
 egen i_YC = group(year county_fe)
 egen i_YI = group(year industry)
@@ -52,7 +52,7 @@ simulate beta=r(beta), reps(100): custom_bootstrap
 bstat, stat(observed) n(`N')
 test beta
 scalar bootstrap = (r(p) < 0.05)
-post `sim' (OLS) (robust) (cluster) (newey) (bootstrap)
+post `sim' (OLS) (robust) (newey) (bootstrap)
 
 postclose `sim'
 
