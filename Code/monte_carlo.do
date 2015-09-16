@@ -65,25 +65,33 @@ program define generateData
 	gen treatment = (state == 1 & year > 2007)
 	
 	* gen county_error = rnormal()
-	gen county_error = RES[1 + floor(runiform() * rowsof(RES)),1]
+	gen county_error = .
+	levelsof state, local(states)
+	foreach state in `states' {
+		local res_matrix = 1 + floor(runiform() * 6)
+		replace county_error = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if state == `state'
+	}
+	* gen county_error = RES[1 + floor(runiform() * rowsof(RES)),1]
 	* bysort state year: gen state_error = rnormal() if _n == 1
-	bysort state year: gen state_error = RES[1 + floor(runiform() * rowsof(RES)),1] if _n == 1	
-	bysort state year: egen state_error_tmp = mean(state_error)
-	drop state_error
-	rename state_error_tmp state_error
+	* bysort state year: gen state_error = RES[1 + floor(runiform() * rowsof(RES)),1] if _n == 1	
+	* bysort state year: egen state_error_tmp = mean(state_error)
+	* drop state_error
+	* rename state_error_tmp state_error
 
-	gen rho = .
-	replace rho = RHO_TREAT[1 + floor(runiform() * rowsof(RHO_TREAT)),1] if state == 1
-	replace rho = RHO_CONTROL[1 + floor(runiform() * rowsof(RHO_CONTROL)),1] if state != 1
-	* replace rho = RHO[1 + floor(runiform() * rowsof(RHO)),1]
+	* gen rho = .
+	* replace rho = RHO_TREAT[1 + floor(runiform() * rowsof(RHO_TREAT)),1] if state == 1
+	* replace rho = RHO_CONTROL[1 + floor(runiform() * rowsof(RHO_CONTROL)),1] if state != 1
 	
 	egen panel = group(state county)
 	tsset panel year
+	gen rho_tmp = RHO[1 + floor(runiform() * rowsof(RHO)),1] if year == 2008
+	bysort panel: egen rho = mean(rho_tmp)
+	drop rho_tmp
 	gen county_residual = county_error if year == 2000
-	gen state_residual = state_error if year == 2000
+	* gen state_residual = state_error if year == 2000
 	foreach year of numlist 2001/2012 {
 		replace county_residual = (1-rho) * county_error + rho * L.county_residual if year == `year'
-		replace state_residual = (1-rho) * state_error + rho * L.state_residual if year == `year'
+		* replace state_residual = (1-rho) * state_error + rho * L.state_residual if year == `year'
 	}
 
 	su state
@@ -93,7 +101,8 @@ program define generateData
 	su year
 	local mean_year = r(mean)
 	
-	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + 0 * treatment + county_residual // + state_residual
+	* not using state residual since my parameter process only outputs a single residual
+	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + county_residual
 	drop *_error *_residual rho
 	drop if year == 2000
 
@@ -292,9 +301,15 @@ program define generateParameters
 	}
 	
 	* prais diff_se_pop
-	regress diff_se_pop L.diff_se_pop
-	predict res, rstand
-	mkmat res, matrix(RES) nomissing
+	levelsof stcode, local(states)
+	local i 1
+	foreach state in `states' {
+		regress diff_se_pop L.diff_se_pop if stcode == `state'
+		predict res if stcode == `state', rstand 
+		mkmat res, matrix(RES`i') nomissing
+		local i = `i' + 1
+		drop res
+	}
 	clear
 
 end
@@ -379,7 +394,7 @@ program define runSimulation
 
 	tempname sim
 
-	postfile `sim' OLS robust cluster ar newey bootstrap using results, replace 
+	postfile `sim' OLS robust cluster ar newey bootstrap using $dir/tmp/mc_output, replace 
 	forvalues i = 1/`number_trials' {
 		* quietly {
 			generateData
@@ -392,14 +407,12 @@ program define runSimulation
 			xtreg y treatment ib2007.year, fe cluster(state)
 			test treatment
 			scalar cluster = (r(p) < 0.05)
-			xtregar y treatment, fe
+			xi: xtregar y treatment i.year, fe
 			test treatment
 			scalar ar = (r(p) < 0.05)
-			egen _ISC = group(state county)
-			xi: newey2 y i.state i._ISC i.year treatment, lag(3)
+			xi: newey2 y i.state i.panel i.year treatment, lag(3)
 			test treatment
-			scalar newey = (r(p) < 0.05)	
-			drop _I*
+			scalar newey = (r(p) < 0.05)
 			regress y i.state i.county#state ib2007.year treatment
 			scalar observed = _b[treatment]
 			local N = e(N)
@@ -412,7 +425,7 @@ program define runSimulation
 	}
 
 	postclose `sim'
-	use results, clear
+	use $dir/tmp/mc_output, clear
 	summarize
 
 end
@@ -502,7 +515,7 @@ program define runTest
 	local number_trials 1000
 	tempname sim
 
-	postfile `sim' OLS robust using results, replace 
+	postfile `sim' OLS robust using $dir/tmp/mc_output, replace 
 	forvalues i = 1/`number_trials' {
 		quietly {
 			generateTestData
@@ -517,9 +530,9 @@ program define runTest
 	}
 
 	postclose `sim'
-	use results, clear
+	use $dir/tmp/mc_output, clear
 	summarize
 
 end
 
-runSimulation 20
+runSimulation 1000
