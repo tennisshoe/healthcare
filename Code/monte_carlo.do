@@ -42,8 +42,22 @@ program define generateData
 
 	local state_count = 6
 	local county_count = 11
+	local industry_count = 1
 	local year_count = 13
 
+	if "`1'" != "" {
+		local state_count = `1'
+	}
+	if "`2'" != "" {
+		local county_count = `2'
+	}
+	if "`3'" != "" {
+		local industry_count = `3'
+	}
+	if "`4'" != "" {
+		local year_count = `4'
+	}
+	
 	clear
 	set obs 1
 
@@ -57,53 +71,51 @@ program define generateData
 	bysort state: gen county = _n
 	drop county_count
 
+	gen industry_count = `industry_count'
+	expand industry_count
+	bysort state county: gen industry = _n
+	drop industry_count
+	
 	gen year_count = `year_count'
 	expand year_count
-	bysort state county: gen year = _n + 1999
+	bysort state county industry: gen year = _n + 1999
 	drop year_count
 
 	gen treatment = (state == 1 & year > 2007)
 	
-	* gen county_error = rnormal()
-	gen county_error = .
+	su industry
+	local industry_cutoff = r(mean)
+	gen treatment_ddd = (state == 1 & industry >= `industry_cutoff' & year > 2007)	
+	
+	gen error_ics = .
 	levelsof state, local(states)
 	foreach state in `states' {
 		local res_matrix = 1 + floor(runiform() * 6)
-		replace county_error = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if state == `state'
+		replace error_ics = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if state == `state'
 	}
-	* gen county_error = RES[1 + floor(runiform() * rowsof(RES)),1]
-	* bysort state year: gen state_error = rnormal() if _n == 1
-	* bysort state year: gen state_error = RES[1 + floor(runiform() * rowsof(RES)),1] if _n == 1	
-	* bysort state year: egen state_error_tmp = mean(state_error)
-	* drop state_error
-	* rename state_error_tmp state_error
-
-	* gen rho = .
-	* replace rho = RHO_TREAT[1 + floor(runiform() * rowsof(RHO_TREAT)),1] if state == 1
-	* replace rho = RHO_CONTROL[1 + floor(runiform() * rowsof(RHO_CONTROL)),1] if state != 1
 	
-	egen panel = group(state county)
+	egen panel = group(state county industry)
 	tsset panel year
 	gen rho_tmp = RHO[1 + floor(runiform() * rowsof(RHO)),1] if year == 2008
 	bysort panel: egen rho = mean(rho_tmp)
 	drop rho_tmp
-	gen county_residual = county_error if year == 2000
-	* gen state_residual = state_error if year == 2000
+	gen residual = error_ics if year == 2000
 	foreach year of numlist 2001/2012 {
-		replace county_residual = (1-rho) * county_error + rho * L.county_residual if year == `year'
-		* replace state_residual = (1-rho) * state_error + rho * L.state_residual if year == `year'
+		replace residual = (1-rho) * error_ics + rho * L.residual if year == `year'
 	}
 
 	su state
 	local mean_state = r(mean)
 	su county
 	local mean_county = r(mean)
+	su industry
+	local mean_industry = r(mean)
 	su year
 	local mean_year = r(mean)
 	
 	* not using state residual since my parameter process only outputs a single residual
-	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + county_residual
-	drop *_error *_residual rho
+	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + industry - `mean_industry' +residual
+	drop error_ics residual rho
 	drop if year == 2000
 
 end
@@ -535,4 +547,4 @@ program define runTest
 
 end
 
-runSimulation 1000
+runSimulation 20
