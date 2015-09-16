@@ -93,7 +93,7 @@ program define generateData
 	su year
 	local mean_year = r(mean)
 	
-	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + 0 * treatment + county_residual + state_residual
+	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + 0 * treatment + county_residual // + state_residual
 	drop *_error *_residual rho
 	drop if year == 2000
 
@@ -249,16 +249,17 @@ program define generateParameters
 	
 	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
 	
-	regress se_pop L.se_pop
-	regress diff_se_pop L.diff_se_pop
-	
+	bysort panel: egen rvals = count(panel)
+	su rvals
+	local col_count = r(mean)
+	drop rvals
 	bysort panel: gen nvals = _n == 1
 	count if nvals & stcode == 25
-	matrix RHO_TREAT = J(r(N),1,0)
+	matrix RHO_TREAT = J(r(N),`col_count',0)
 	count if nvals & stcode != 25
-	matrix RHO_CONTROL = J(r(N),1,0)
+	matrix RHO_CONTROL = J(r(N),`col_count',0)
 	count if nvals
-	matrix RHO = J(r(N),1,0)
+	matrix RHO = J(r(N),`col_count',0)
 	drop nvals
 	
 	levelsof panel, local(panels)
@@ -268,20 +269,29 @@ program define generateParameters
 	foreach panel in `panels' {
 		quietly: {
 			regress diff_se_pop L.diff_se_pop if panel == `panel'
+			local rho = _b[L.diff_se_pop]
+			predict res if panel == `panel', rstand
+			mkmat res, nomissing
+			* matrix list res
+			drop res
 			count if panel == `panel' & stcode == 25
 			if(r(N) > 0) {
-				matrix RHO_TREAT[`iTreat',1] = _b[L.diff_se_pop]
-				local i_treat = `iTreat' + 1
+				matrix RHO_TREAT[`iTreat',1] = `rho'
+				matrix RHO_TREAT[`iTreat',2] = res'
+				local iTreat = `iTreat' + 1
 			}
 			else {
-				matrix RHO_CONTROL[`iControl',1] = _b[L.diff_se_pop]
-				local i_control = `iControl' + 1
+				matrix RHO_CONTROL[`iControl',1] = `rho'
+				matrix RHO_CONTROL[`iControl',2] = res'
+				local iControl = `iControl' + 1
 			}
-			matrix RHO[`i', 1] = _b[L.diff_se_pop]
+			matrix RHO[`i',1] = `rho'
+			matrix RHO[`i',2] = res'
 			local i = `i' + 1
 		}
 	}
 	
+	* prais diff_se_pop
 	regress diff_se_pop L.diff_se_pop
 	predict res, rstand
 	mkmat res, matrix(RES) nomissing
@@ -339,11 +349,11 @@ program define generateParametersDDD
 			count if panel == `panel' & stcode == 25
 			if(r(N) > 0) {
 				matrix RHO_TREAT[`iTreat',1] = _b[L.diff_ne_pop]
-				local i_treat = `iTreat' + 1
+				local iTreat = `iTreat' + 1
 			}
 			else {
 				matrix RHO_CONTROL[`iControl',1] = _b[L.diff_ne_pop]
-				local i_control = `iControl' + 1
+				local iControl = `iControl' + 1
 			}
 			matrix RHO[`i', 1] = _b[L.diff_ne_pop]
 			local i = `i' + 1
@@ -363,6 +373,9 @@ program define runSimulation
 
 	generateParameters
 	local number_trials 100
+	if ("`1'" != "") {
+		local number_trials = `1'
+	}
 
 	tempname sim
 
@@ -509,5 +522,4 @@ program define runTest
 
 end
 
-runSimulationDDD
-
+runSimulation 20
