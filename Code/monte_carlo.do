@@ -8,6 +8,9 @@ if "$S_OS" == "Windows" {
 	global dir "z:\Healthcare" 
 }
 
+log close _all
+log using "$dir/tmp/mc_main_2_100_1000.log", append
+
 * NE has 6 states with an average of 11 counties
 * MA has 16 counties
 
@@ -40,48 +43,115 @@ diff_se_pop with 3 lagged variables
 
 program define generateData
 
-	local state_count = 6
-	local county_count = 11
-	local industry_count = 1
+	local group_count = 6
+	local individual_count = 11
 	local year_count = 13
 
 	if "`1'" != "" {
-		local state_count = `1'
+		local group_count = `1'
 	}
 	if "`2'" != "" {
-		local county_count = `2'
+		local individual_count = `2'
 	}
 	if "`3'" != "" {
-		local industry_count = `3'
-	}
-	if "`4'" != "" {
-		local year_count = `4'
+		local year_count = `3'
 	}
 	
 	clear
-	set obs 1
+	set obs 1	
 
-	gen state_count = `state_count'
-	expand state_count
-	gen state = _n
-	drop state_count
+	gen group_count = `group_count'
+	expand group_count
+	gen group = _n
+	drop group_count
 
-	gen county_count = `county_count'
-	expand county_count
-	bysort state: gen county = _n
-	drop county_count
+	gen individual_count = `individual_count'
+	expand individual_count
+	bysort group: gen individual = _n
+	drop individual_count
 
-	gen industry_count = `industry_count'
-	expand industry_count
-	bysort state county: gen industry = _n
-	drop industry_count
-	
 	gen year_count = `year_count'
 	expand year_count
-	bysort state county industry: gen year = _n + 1999
+	bysort group individual: gen year = _n
 	drop year_count
 
-	gen treatment = (state == 1 & year > 2007)
+	gen treatment = (group == 1 & year > (`year_count' / 2))
+
+	gen error = .
+	levelsof group, local(groups)
+	foreach group in `groups' {
+		local res_matrix = 1 + floor(runiform() * state_count)
+		replace error = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if group == `group'
+	}
+	
+	egen panel = group(group individual)
+	tsset panel year
+	su year
+	local min_year = r(min)
+	gen rho_tmp = RHO[1 + floor(runiform() * rowsof(RHO)),1] if year == `min_year'
+	bysort panel: egen rho = mean(rho_tmp)
+	drop rho_tmp
+	levelsof year, local(years)
+	foreach year in `years' {
+		if (`year' == `min_year') {
+			gen residual = error if year == `year'
+		} 
+		else {
+			replace residual = rho * L.residual + (1-rho) * error if year == `year'
+		}
+	}
+	drop if year == `min_year'
+
+	su group
+	local mean_group = r(mean)
+	su panel
+	local mean_panel = r(mean)
+	su year
+	local mean_year = r(mean)
+	
+	* not using state residual since my parameter process only outputs a single residual
+	gen y = group - `mean_group' + panel - `mean_panel' + year - `mean_year' + residual	
+	su y
+	gen y_treated = y + r(sd) / 2 * treatment
+	drop error residual rho
+	
+end
+
+program define generateDataIndustry
+
+	local group_count = 6
+	local individual_count = 11
+	local year_count = 13
+
+	if "`1'" != "" {
+		local group_count = `1'
+	}
+	if "`2'" != "" {
+		local individual_count = `2'
+	}
+	if "`3'" != "" {
+		local year_count = `3'
+	}
+
+	clear
+	set obs 1
+	
+	gen group_count = `group_count'
+	expand group_count
+	gen group = _n
+	drop group_count
+
+	gen individual_count = `individual_count'
+	expand individual_count
+	bysort group: gen individual = _n
+	drop individual_count
+
+	gen year_count = `year_count'
+	expand year_count
+	bysort group individual: gen year = _n
+	drop year_count
+
+	gen treatment = (state == 1 & year > (`year_count' / 2))
 	
 	su industry
 	local industry_cutoff = r(mean)
@@ -101,7 +171,7 @@ program define generateData
 	drop rho_tmp
 	gen residual = error_ics if year == 2000
 	foreach year of numlist 2001/2012 {
-		replace residual = (1-rho) * error_ics + rho * L.residual if year == `year'
+		replace residual = rho * L.residual + error_ics if year == `year'
 	}
 
 	su state
@@ -115,8 +185,11 @@ program define generateData
 	
 	* not using state residual since my parameter process only outputs a single residual
 	gen y = state - `mean_state' + county - `mean_county' + year - `mean_year' + industry - `mean_industry' +residual
+	
 	drop error_ics residual rho
 	drop if year == 2000
+	
+	egen county_fe = group(state county)
 
 end
 
@@ -201,47 +274,121 @@ program define generateDataDDD
 end
 
 program define ggn_boostrap, rclass
-	preserve
 
-	tempvar t dup expand_count county_duplicates county_bootstrap state_bootstrap county_group n N
+	preserve
+	tempvar t dup expand_count individual_duplicates individual_bootstrap group_bootstrap n N
 	
 	local treatment_count 0
-	while `treatment_count' == 0 {
+	local control_count 0
+	while `treatment_count' == 0 | `control_count' == 0 {
 		restore, preserve
-		bsample, idcluster(`state_bootstrap') cluster(state)
-		count if state == 1
+		bsample, idcluster(`group_bootstrap') cluster(group)
+		count if group == 1
 		local treatment_count = r(N)
+		count if group != 1
+		local control_count = r(N)
 	}	
 	
 	* now randomizing within each state
-	gen `county_duplicates' = .
-	sort `state_bootstrap' year
-	by `state_bootstrap' year: gen `N' = _N if year == 2008
-	by `state_bootstrap' year: gen `county_bootstrap' = 1 + floor(runiform() * `N') if year == 2008
-	levelsof county, local(counties)
-	foreach county in `counties' {
-		by `state_bootstrap' year: egen `t' = total(`county_bootstrap' == `county') if year == 2008
-		by `state_bootstrap' year: replace `county_duplicates' = `t' if county == `county' & year == 2008
+	replace group = `group_bootstrap'
+	drop `group_bootstrap'
+	gen `individual_duplicates' = .
+	sort group year
+	su year
+	local min_year = r(min)
+	by group year: gen `N' = _N if year == `min_year'
+	by group year: gen `individual_bootstrap' = 1 + floor(runiform() * `N') if year == `min_year'
+	levelsof individual, local(individuals)
+	foreach individual in `individuals' {
+		by group year: egen `t' = total(`individual_bootstrap' == `individual') if year == `min_year'
+		by group year: replace `individual_duplicates' = `t' if individual == `individual' & year == `min_year'
 		drop `t'
 	}
+	drop `individual_bootstrap' `N'
 	
-	bysort `state_bootstrap' county: egen `expand_count' = mean(`county_duplicates' + 1)	
+	bysort group individual: egen `expand_count' = mean(`individual_duplicates' + 1)
 	expand `expand_count', generate(`dup')
-	drop if `dup' == 0	
-	bysort `state_bootstrap' county year: gen `n' = _n
-	egen `county_group' = group(state county `n')
-	replace county = `county_group'
-	replace state = `state_bootstrap'
-	drop `dup' `expand_count' `county_duplicates' `county_bootstrap' `state_bootstrap' `county_group' `n' `N'
-	sort state county year
+	drop if `dup' == 0
+	drop `dup' `individual_duplicates' `expand_count'	
+	drop individual
+	sort group year panel 
+	by group year: gen individual = _n	
+	drop panel
+	egen panel = group(group individual)
 	
-	regress y i.state i.county ib2007.year treatment
-	return scalar beta = _b[treatment]
+	regress y_treat i.group i.panel i.year treatment
+	return scalar treatment = _b[treatment]
+	regress y i.group i.panel i.year treatment
+	return scalar no_treatment = _b[treatment]
 	
 	restore
 end
 
 program define generateParameters
+
+	scalar drop _all
+	matrix drop _all
+	use "$dir/tmp/Employment.dta", clear
+	keep stcode cntycd year self_employed
+	drop if year == 2013
+	
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+
+	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	scalar state_count = 6
+
+	egen state = group(stcode)
+	drop stcode
+	
+	egen panel =  group(state cntycd)
+	tsset panel year
+	
+	sort panel year	
+	gen se_pop = self_employed / population
+	gen diff_se_pop = D.se_pop
+	
+	levelsof panel, local(panels)
+	foreach panel in `panels' {
+		regress diff_se_pop L.diff_se_pop if panel == `panel'
+		local rho = _b[L.diff_se_pop]
+		predict res if panel == `panel', rstand
+		replace res = res / (1-`rho')
+		mkmat res, nomissing
+		drop res
+		
+		su state if panel == `panel'
+		local state = r(mean)
+		capture: matrix list RES`state'			
+		if _rc == 111 {
+			matrix RES`state' = res
+		}
+		else {
+			matrix RES`state' = RES`state'\res
+		}
+		matrix drop res
+
+		capture: matrix list RHO			
+		if _rc == 111 {
+			matrix RHO = (`rho')
+		}
+		else {
+			matrix RHO = RHO\(`rho')			
+		}
+	}
+	
+	clear
+
+end
+
+program define generateParametersOld
 
 	use "$dir/tmp/Employment.dta", clear
 	keep stcode cntycd year self_employed
@@ -269,6 +416,7 @@ program define generateParameters
 	gen treatment = stcode == 25 & year > `base_year'
 	
 	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	scalar state_count 6
 	
 	bysort panel: egen rvals = count(panel)
 	su rvals
@@ -325,6 +473,73 @@ program define generateParameters
 	clear
 
 end
+
+program define generateParametersIndustry
+
+	use $dir/tmp/nonemployedLong.dta, clear
+	drop if naics >= 9900 & naics < 10000
+	drop if naics >= 6200 & naics < 6240
+	drop if naics >= 9500 & naics < 9600
+	drop if year < 2000
+	drop if year > 2012
+	ren small ne_est
+	keep ne_est stcode cntycd naics year	
+
+	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+	
+	egen panel =  group(stcode cntycd naics)
+	tsset panel year
+	
+	sort panel year
+	gen ne_pop = ne_est / population
+	gen diff_ne_pop = D.ne_pop
+
+	drop if year == 2000
+	
+	bysort panel: egen years = count(diff_ne_pop)
+	bysort panel: gen nvals = _n == 1
+	local min_years 5
+	count if nvals & years >= `min_years'
+	matrix RHO = J(r(N),1,0)
+	drop nvals
+	
+	levelsof panel if years >= `min_years', local(panels)
+	local i 1
+	foreach panel in `panels' {
+		quietly: {
+			regress diff_ne_pop L.diff_ne_pop if panel == `panel'
+			local rho = _b[L.diff_ne_pop]
+			matrix RHO[`i',1] = `rho'
+			local i = `i' + 1
+		}
+	}
+	
+	levelsof stcode, local(states)
+	local i 1
+	foreach state in `states' {
+		sort panel year
+		regress diff_ne_pop L.diff_ne_pop if stcode == `state'
+		predict res if stcode == `state', rstand 
+		sort res
+		replace res = . if _n > 11000
+		mkmat res, matrix(RES`i') nomissing
+		local i = `i' + 1
+		drop res
+	}
+	clear
+
+end
+
 
 program define generateParametersDDD
 
@@ -406,10 +621,85 @@ program define runSimulation
 
 	tempname sim
 
-	postfile `sim' OLS robust cluster ar newey bootstrap using $dir/tmp/mc_output, replace 
+	postfile `sim' OLS robust cluster ar newey bootstrap OLS_t robust_t cluster_t ar_t newey_t bootstrap_t using $dir/tmp/mc_output, replace 
 	forvalues i = 1/`number_trials' {
 		* quietly {
-			generateData
+			generateData 2 100 13
+			* generateData 5 10 13
+
+			xtreg y treatment i.year, fe
+			test treatment
+			scalar OLS = (r(p) < 0.05)
+			xtreg y_treat treatment i.year, fe
+			test treatment
+			scalar OLS_t = (r(p) < 0.05)
+		
+			xtreg y treatment i.year, fe robust
+			test treatment
+			scalar robust = (r(p) < 0.05)
+			xtreg y_treat treatment i.year, fe robust
+			test treatment
+			scalar robust_t = (r(p) < 0.05)
+
+			xtreg y treatment i.year, fe cluster(group)
+			test treatment
+			scalar cluster = (r(p) < 0.05)
+			xtreg y_treat treatment i.year, fe cluster(group)
+			test treatment
+			scalar cluster_t = (r(p) < 0.05)
+			
+			xi: xtregar y treatment i.year, fe
+			test treatment
+			scalar ar = (r(p) < 0.05)
+			xi: xtregar y_treat treatment i.year, fe
+			test treatment
+			scalar ar_t = (r(p) < 0.05)
+			
+			
+			xi: newey2 y i.group i.panel i.year treatment, lag(3)
+			test treatment
+			scalar newey = (r(p) < 0.05)
+			xi: newey2 y_treat i.group i.panel i.year treatment, lag(3)
+			test treatment
+			scalar newey_t = (r(p) < 0.05)
+			
+			regress y i.group i.panel i.year treatment
+			scalar observed = _b[treatment]
+			local N = e(N)
+			regress y_treat i.group i.panel i.year treatment
+			scalar observed_t = _b[treatment]
+			simulate beta=r(no_treatment) beta_t=r(treatment), reps(100): ggn_boostrap
+			bstat, stat([observed, observed_t]) n(`N')
+			test beta
+			scalar bootstrap = (r(p) < 0.05)
+			test beta_t
+			scalar bootstrap_t = (r(p) < 0.05)			
+			
+			post `sim' (OLS) (robust) (cluster) (ar) (newey) (bootstrap) (OLS_t) (robust_t) (cluster_t) (ar_t) (newey_t) (bootstrap_t)
+		* }
+	}
+
+	postclose `sim'
+	use $dir/tmp/mc_output, clear
+	summarize
+
+end
+
+program define runSimulationIndustry
+
+	generateParametersIndustry
+	local number_trials 100
+	if ("`1'" != "") {
+		local number_trials = `1'
+	}
+
+	tempname sim
+
+	postfile `sim' OLS robust cluster ar newey bootstrap using $dir/tmp/mc_outputI, replace 
+	forvalues i = 1/`number_trials' {
+		* quietly {
+			* MA has 14 counties and 112 4 digit naics on average
+			generateData 2 14 112 13
 			xtreg y treatment ib2007.year, fe
 			test treatment
 			scalar OLS = (r(p) < 0.05)
@@ -422,10 +712,10 @@ program define runSimulation
 			xi: xtregar y treatment i.year, fe
 			test treatment
 			scalar ar = (r(p) < 0.05)
-			xi: newey2 y i.state i.panel i.year treatment, lag(3)
+			xi: newey2 y i.state i.county_fe i.industry i.year treatment, lag(3)
 			test treatment
 			scalar newey = (r(p) < 0.05)
-			regress y i.state i.county#state ib2007.year treatment
+			regress y i.state i.county_fe i.industry ib2007.year treatment
 			scalar observed = _b[treatment]
 			local N = e(N)
 			simulate beta=r(beta), reps(100): ggn_boostrap
@@ -437,7 +727,7 @@ program define runSimulation
 	}
 
 	postclose `sim'
-	use $dir/tmp/mc_output, clear
+	use $dir/tmp/mc_outputI, clear
 	summarize
 
 end
@@ -547,4 +837,4 @@ program define runTest
 
 end
 
-runSimulation 20
+runSimulation 1000
