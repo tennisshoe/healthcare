@@ -8,8 +8,14 @@ if "$S_OS" == "Windows" {
 	global dir "z:\Healthcare" 
 }
 
+global groups 2
+global individuals 100
+global years 13
+global reps 200
+
+local logfile = "$dir/tmp/mc_main_$groups" + "_$individuals" + "_$reps.log"
 log close _all
-log using "$dir/tmp/mc_main_2_100_1000.log", append
+log using `logfile', replace
 
 * NE has 6 states with an average of 11 counties
 * MA has 16 counties
@@ -112,7 +118,7 @@ program define generateData
 	* not using state residual since my parameter process only outputs a single residual
 	gen y = group - `mean_group' + panel - `mean_panel' + year - `mean_year' + residual	
 	su y
-	gen y_treated = y + r(sd) / 2 * treatment
+	gen y_treated = y + r(sd) / 3 * treatment
 	drop error residual rho
 	
 end
@@ -359,7 +365,8 @@ program define generateParameters
 	foreach panel in `panels' {
 		regress diff_se_pop L.diff_se_pop if panel == `panel'
 		local rho = _b[L.diff_se_pop]
-		predict res if panel == `panel', rstand
+		* predict res if panel == `panel', rstand
+		predict res if panel == `panel', residuals
 		replace res = res / (1-`rho')
 		mkmat res, nomissing
 		drop res
@@ -620,12 +627,13 @@ program define runSimulation
 	}
 
 	tempname sim
-
-	postfile `sim' OLS robust cluster ar newey bootstrap OLS_t robust_t cluster_t ar_t newey_t bootstrap_t using $dir/tmp/mc_output, replace 
+	tempfile output
+	
+	postfile `sim' OLS robust cluster ar newey bootstrap OLS_t robust_t cluster_t ar_t newey_t bootstrap_t using `output', replace 
 	forvalues i = 1/`number_trials' {
 		* quietly {
-			generateData 2 100 13
-			* generateData 5 10 13
+			display "Generating $groups $individuals $years"
+			generateData $groups $individuals $years
 
 			xtreg y treatment i.year, fe
 			test treatment
@@ -643,7 +651,7 @@ program define runSimulation
 
 			xtreg y treatment i.year, fe cluster(group)
 			test treatment
-			scalar cluster = (r(p) < 0.05)
+			scalar cluster = (r(p) < 0.05)			
 			xtreg y_treat treatment i.year, fe cluster(group)
 			test treatment
 			scalar cluster_t = (r(p) < 0.05)
@@ -670,6 +678,7 @@ program define runSimulation
 			scalar observed_t = _b[treatment]
 			simulate beta=r(no_treatment) beta_t=r(treatment), reps(100): ggn_boostrap
 			bstat, stat([observed, observed_t]) n(`N')
+			scaleCorrection $individuals
 			test beta
 			scalar bootstrap = (r(p) < 0.05)
 			test beta_t
@@ -678,10 +687,19 @@ program define runSimulation
 			post `sim' (OLS) (robust) (cluster) (ar) (newey) (bootstrap) (OLS_t) (robust_t) (cluster_t) (ar_t) (newey_t) (bootstrap_t)
 		* }
 	}
-
+	
 	postclose `sim'
-	use $dir/tmp/mc_output, clear
+	use `output', clear
 	summarize
+
+end
+
+program define scaleCorrection, eclass
+
+	local k = `1'
+	matrix _A = e(V)
+	matrix _A = (`k'/(`k'-1))*_A
+	ereturn repost V = _A
 
 end
 
@@ -837,4 +855,4 @@ program define runTest
 
 end
 
-runSimulation 1000
+runSimulation $reps
