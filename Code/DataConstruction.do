@@ -1,5 +1,9 @@
 clear all
 global dir "~/Healthcare"
+if "$S_OS" == "Windows" { 
+	global dir "z:\Healthcare" 
+}
+
 set more off
 
 /*
@@ -1629,8 +1633,8 @@ program define InfogroupToCountyBusiness
 
 end
 
-BuildCountyBusinessData
-BuildNonemployerData
+//BuildCountyBusinessData
+//BuildNonemployerData
 //BuildCaptialData
 //BuildCountyBusinessLongData
 //InfogroupToCountyBusiness
