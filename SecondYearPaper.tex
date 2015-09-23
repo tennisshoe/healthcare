@@ -133,7 +133,9 @@ A net effect of the act was a drop in uninsured Massachusetts residents. The Mas
 
 There is also a tangible cost to entrepreneurs when universal health care is provided: increased taxes.  While universal health care may have near term benefits for entrepreneurs, it also has long term costs that reduce payoffs. 
 
-From an entrepreneurial standpoint, we view the act as having improved the health insurance marketplace for self-employed residents. We are agnostic to the mechanism. One possibility is the lower cost of insurance; Gruber \cite{gruber} suggests that controlling for plans with lower benefits, the cost of individual insurance plans dropped by 20\% as a results of the reforms. Other potential mechanisms include the ability to sign up for plans with pre-existing conditions and greater confidence in keeping insurance conditional on becoming sick. We consider the act as an exogenous shock on entrepreneurship outside of the healthcare industry since the passage of the act was not driven by entrepreneurial activity in Massachusetts. We use the period starting in 2008 as the treatment period for the shock since the law's main effect of lowering the uninsured rate was observed in 2008. 
+From an entrepreneurial standpoint, we view the act as having improved the health insurance marketplace for self-employed residents. We are agnostic to the mechanism. One possibility is the lower cost of insurance; Gruber \cite{gruber} suggests that controlling for plans with lower benefits, the cost of individual insurance plans dropped by 20\% as a results of the reforms. Other potential mechanisms include the ability to sign up for plans with pre-existing conditions and greater confidence in keeping insurance conditional on becoming sick. We use the period starting in 2008 as the treatment period for the shock since the law's main effect of lowering the uninsured rate was observed in 2008. 
+
+Simultaneity is a concern in our setting. We can imagine there exists both a supply of individuals willing to become an entrepreneur as well as a demand for entrepreneurs in the form of opportunities for entrepreneurship. We assume the health care reforms have a minor impact on opportunities for entrepreneurship outside of the health care industry in our analysis. The assumption would be false if for example the health reform freed up enough disposable income to significantly increase spending on restaurants. Holding our assumption enables us to identify how the health care law changes the supply of entrepreneurship. 
 
 \section{Theoretical Motivation}
 \label{sec:model}
@@ -227,6 +229,10 @@ Table \ref{tab:basic} provides summary statistics for our three variables of int
 	\label{tab:basic}
 \end{table}
 
+In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability an individual becomes an entrepreneur. Given the constraints of our dataset, we focus on the change in our variables of interest per million people. In some of our specifications, we measure this per county ($Change_{ct}$) while in others we measure rates per 2 or 4 digit NAICS industry by county ($Change_{cit}$). 
+
+This differs from the more common usage of percentage of self-employed in a given sub-population. We do not think the percentage approach is applicable in our case because we expand beyond self-employed workers to consider the count of firms; we believe the number of firms per million people has a more intuitive interpretation than the percentage of firms in a population of people.
+
 \begin{comment}
 
 \begin{figure}[H]
@@ -280,54 +286,23 @@ Finally, we use the 2012 Economic Census Industry Series for information about t
 
 \end{comment}
 
-\section{Methodology}
+\section{Empirical Approach}
 \label{sec:regression}
-
-In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability an individual becomes an entrepreneur. Given the constraints of our dataset, we focus on the change in our variables of interest per million people. In some of our specifications, we measure this per county ($Change_{ct}$) while in others we measure rates per 2 or 4 digit NAICS industry by county ($Change_{cit}$). 
-
-This differs from the more common usage of percentage of self-employed in a given sub-population. We do not think the percentage approach is applicable in our case because we expand beyond self-employed workers to consider the count of firms; we believe the number of firms per million people has a more intuitive interpretation than the percentage of firms in a population of people. 
 
 \subsection{Overall Impact}
 
-Proposition 1  
-
-To test Proposition 1, we first apply a diff-in-diff approach with counties in Massachusetts as the control group and counties in the rest of New England as control. If the reform improved the return to entrepreneurship for some workers, our treatment indicator should be positive. 
+Proposition 1 suggests we should see an increase in entrepreneurial activity after the health care reform. To test this prediction, we first apply a diff-in-diff approach with counties in Massachusetts as the treatment group and various controls. If the reform improved the return to entrepreneurship for some workers, our treatment indicator should be positive. 
 \begin{align}
-Change_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
+Change_{cst} = \alpha_c + \zeta_s + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{cst}
 \end{align}
 
-Here $Change_{ct}$ represents the change in our variable of interest per million residents in year $t$ and county $c$. The model includes fixed effects for year ($\delta$) and county ($\alpha$). Model (1) is estimated in Table \ref{tab:prop1}. We cluster by county rather than by state because as Garthwaite \footnote{GW} et al show using a Monte Carlo method in their online appendix, with a single treatment cluster standard errors can be too small. Clustering by county lowers our chances of incorrectly rejected our null hypothesis. To illustrate, we provide Model (1) state clustered results in Table \ref{tab:prop1_state}. 
+Here $Change_{cst}$ represents the change in our variable of interest per million residents in year $t$ and county $c$ of state $s$. The model includes fixed effects for year ($\delta$), county ($\alpha$) and state ($\zeta$).
 
-\begin{center}
-	\begin{table}[H]
-		\centering
-		\caption{Model (1) estimator clustered by county} 
-		\input{resources/prop1.tex}	
-		\label{tab:prop1}
-	\end{table}		
-\end{center}
+Our first control consists of counties in New England outside of Massachusetts. We define New England as Connecticut, Maine, New Hampshire, Rhode Island, Vermont and Massachusetts. This helps account for broad regional shocks such as recessions that affect all of New England. 
 
-\begin{center}
-	\begin{table}[H]
-		\centering
-		\caption{Model (1) estimator clustered by state} 
-		\input{resources/prop1_state.tex}	
-		\label{tab:prop1_state}
-	\end{table}		
-\end{center}
+For a more targeted approach, we use border matching as our second control. Here our treatment group consists of Massachusetts counties that share a border with another state. This pulls out the cities of Boston and Cambridge. Our control group consists of counties in Connecticut, New Hampshire, Rhode Island, Vermont and New York that border Massachusetts. We would expect this method to help ensure our control and treatment groups are similar if geographically close counties  have for example more similar economic activity than distant counties. 
 
-Next we use a synthetic control approach as an alternative empirical strategy to test Model (1). For each county in Massachusetts and each variable of interest, we construct a synthetic control using the county's level of urbanization, uninsured rate, population age, the presence of children as well as pretreatment trends \footnote{Abadie}. The synthetic county is constructed from all counties in the US outside of Massachusetts. Results are provided in Table \ref{tab:prop1_synth}.
-
-\begin{center}
-	\begin{table}[H]
-		\centering
-		\caption{Model (1) estimator with synthetic control} 
-		\input{resources/prop1_synth.tex}	
-		\label{tab:prop1_synth}
-	\end{table}		
-\end{center}
-
-When using New England as a control group under county clustering we see a highly significant positive estimate on the change in rate of self-employed individuals and non-employer establishment creation in Massachusetts after our shock. However the synthetic control reduces the point estimates and eliminates their significance. As shown in Figure \ref{fig:state_contrast}, the synthetic control has a more reasonable pretrend. We are therefore unable to reject the null hypothesis that the 2006 health insurance shock had no effect on overall entrepreneurship using a general difference-in-difference approach.
+Finally we employ a synthetic control method drawing on counties across all US states other than Massachusetts. Our approach mirrors the procedure used in Abadie (???)\footnote{Abadie}. For each county in Massachusetts we generate a synthetic pair as a control. We first prune the matching pool by removing counties that significantly differ from the Massachusetts county in either level of urbanization, uninsured rate, population age, or the frequency of children in a household. We then assign weights to the pruned set of counties in order to minimize the difference in our outcome variable before our shock. This has the benefit of removing any pre-trend from our natural experiment as seen in Figure \ref{fig:state_contrast}. The downside is that the matching is done algorithmically and may therefore be counterintuitive. In our case the procedure yielded arguably valid results; self-employment rates in Boston (Suffolk County, MA) before 2008 most closely matched a combination the counties for Ann Arbor, MI (57\% weight), Lexington, KY (25\% weight) and other various counties across the US. 
 
 \begin{figure}[H]
 	\centering
@@ -342,8 +317,6 @@ When using New England as a control group under county clustering we see a highl
 	\caption{Treatment Effect for Self-Employed Individuals}
 	\label{fig:state_contrast}
 \end{figure}
-
-For the remainder of the paper we focus on the synthetic results since the control group does a better job of satisfying the parallel trends assumption needed for differences in difference analysis.
 
 \subsection{Non-profit Heterogeneity}
 
@@ -362,15 +335,6 @@ Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_
 & + \beta \, \mathbf{1}\{\text{non-profit industry}\} \cdot \mathbf{1}\{\text{year > 2007}\}  \cdot \mathbf{1}\{\text{county in  MA}\} \nonumber  \\
 & + \epsilon_{ict}
 \end{align}
-
-Our results for both specifications are presented in Table \ref{tab:nonprofit} \footnote{Robust standard errors clustered on county and 4 digit NAICS industry used. US wide 2012 Economic Census industry data used determine 4 digit NAICS codes with over 50\% of federal tax exempt establishments. Health care related establishments and state-wide establishments dropped.}. Although the difference-in-difference model suggests non-profit non-employer establishments differentially benefited from the shock, the impact is attenuated and significance lost once we include our synthetic state as a control. We interpret this as evidence that the long term tax implications of health care subsidies are not attenuating entrepreneurship rates. 
-
-\begin{table}[H]
-	\centering
-	\input{resources/nonprofit.tex}
-	\caption{Impact of health reform on non-profit entrepreneurship}
-	\label{tab:nonprofit}
-\end{table}
 
 \subsection{Capital Requirement Heterogeneity}
 
@@ -413,83 +377,118 @@ Unfortunately our theory does not provide a clear mechanism for determining what
 	\label{fig:ddd}
 \end{figure}
 
-Table \ref{tab:capital_ne} summarizes our results for non-employers and Table \ref{tab:capital_em} summarizes our small business results. Our small business results do now show statistical significance. Our Model (4) difference and difference estimator for non-employers shows a significant drop in establishment creation rates for low capital enterprises over high capital enterprises. The estimate of Model (5) which accounts for non-Massachusetts specific shocks attenuates our results but does not remove the significance. To put our results in perspective, overall Massachusetts had on average an increase of 639 non-employer establishments per year per million people. We have 100 NAICS 4 digit industries represented in our dataset, so the average increase is on the order of 6 establishments per year per million people per industry. Our point estimate of -16 therefore suggests a large and meaningful impact on the number of low capital establishments relative to high capital establishments as a result of the health care shock for non-employers. The results from Model (6) and Model (7) indicate the large impact may have been a short term phenomenon for non-employers. 
+\subsection{Inference}
+
+Fixed effect with clustered standard errors by state is the usual approach to inference when dealing with state wide shocks. However as pointed out by Donald and Lang \footnote{Donald Lang}, inference with a small number of cluster groups can suffer from large bias. In our New England control specification we only have 5 groups. We also have limited observations per group; each New England state just has 11 counties on average so the two-step approach suggested by Donald and Lang does not apply. 
+
+In addition, our shock only applies to a single state cluster leading to a singular covariance matrix under our modeling specification. To illustrate with a simple linear model, suppose we have $N$ individuals $i$ spread across $M$ groups $g$. Linear regression of observed outcomes $Y_i$ against a vector of independent variables $X_i$ solves a system of equations for $\beta$. 
+$$ \hat{\beta} = \underset{\beta}{\arg \min} \; \sum_{i=1}^{N} (Y_i - X_i' \beta)^2 \implies \sum_{g=1}^{M} \sum_{i \in g} X_i(Y_i - X_i' \hat{\beta}) = 0$$
+
+Suppose we have a treatment indicator variable $X_i^t$ with a corresponding coefficient $\beta^t$ and the treatment is one for just a single group $g^t$. We can rewrite the system of equations and note the sum of its residuals for the group $g^t$ equals zero by construction. 
+\begin{align*}
+& \sum_{g=1}^{M} \sum_{i \in g} \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) = \\  & \; \sum_{g\ne g^t}^{M} \sum_{i \in g} \begin{bmatrix}
+X_i^{-t} \\  0 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  0 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) + \sum_{i \in g^t} \begin{bmatrix}
+X_i^{-t} \\  1 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  1 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) = 0 \\
+& \implies \sum_{i \in g^t} (1) 
+(Y_i - \begin{bmatrix}
+X_i^{-t} \\  1 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) = 0
+\end{align*}
+
+The covariance matrix for clustered standard errors take the form:
+$$ \hat{V} \propto (X'X)^{-1} \left( \sum_{g=1}^{M} \sum_{i \in g} \left(\begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix})\right)' \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix})  \right)  (X'X)^{-1}$$ 
+
+We observe that in the inner summation when $g \ne g^t$ we are adding matrices with zero's in the last column and row since $X^t_i$ will be zero. When $g = g^t$, from above we know the group's residual is zero by construction so we have a zero matrix. Therefore the inner matrix must be singular which implies the covariance matrix is also singular. 
+
+In order to construct confidence intervals given the issues with our small group size, we first use a monte-carlo simulation to test various approaches. Our data generating process is based on a modifided version of model (1) allowing for auto-correlated residuals and error distributions that vary by state. 
+\begin{align}
+Change_{sct} & = \alpha_c + \gamma_s + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \xi_{sct} \\
+\xi_{sct} & = 
+\begin{cases}\rho_{sc} \, \xi_{sc(t-1)} + (1-\rho_{sc}) \epsilon_{sct} &\mbox{if } t > 1 \nonumber \\ 
+\epsilon_{sct}  & \mbox{if } t = 1. \end{cases}
+\end{align}
+Here $\rho$ is a random variable with distribution $\mathcal{F}$ and $\epsilon$ is a random variable with distribution $\mathcal{G}_s$ that varies by state. We estimate $\hat{\rho}_{sc}$ for each county in New England by regressing $Change_{sct}$ against $Change_{sc(t-1)}$ in our self-employed dataset. $\mathcal{F}$ is then approximated by taking uniform draws from the set of $\hat{\rho}_{sc}$'s. We group the residuals from the $\hat{\rho}_{sc}$ estimation by state and divide them by $1/(1-\hat{\rho}_{sc})$ to similarly create approximations for the $\mathcal{G}_s$ set. 
+
+In order to test for Type 1 error, we set $\beta$ to zero in equation 8, simulate the data and drop our first year's observations since they lack an auto-correlated term. To test Type 2 error, we set $\beta$ equal to a third of the standard deviation of $Change_{sct}$. Through experiment we determined this value produced sufficient variation between our inference methods for comparison. We run fixed effects regressions under homeostatic, robust, stated clustered and auto-regressive error assumptions. We also calculate Newey-West errors with a 3 year and we use a 2 step block bootstrap method with re-sampling of counties within states using the scaling correction suggested by Rao and Wu\footnote{Rao Wu}. 
+
+Table \ref{tab:mc} presents the results. We see that fixed effects under AR(1) assumptions does the best overall. However the assumption of an AR(1) process was baked into our data generating process through our functional form; it may not accurately reflect our observed data. We therefore select robust inference as preferred for our dataset since robust errors do not show excessive Type 1 error and it performs slightly better than our bootstrap procedure on Type 2 error.
 
 \begin{table}[H]
 	\centering
-	\input{resources/main_diff_ne_pop.tex}
-	\caption{Impact of health reform on low capital industries}
-	\label{tab:capital_ne}
+	\caption{Monte Carlo Simulation of Type 1 and 2 Errors}
+	\begin{tabular}{lrrrr} \hline \hline
+		Specification &(1) & (2) & (3) & (4)  \\  
+		\hline \textbf{Simulation Parameters} & & & & \\
+		States &   5 &    2 & 5 & 2\\
+		Counties per State &        10 &        100 & 10 & 100\\
+		Years of Observations &        12 &        12 & 12 & 12 \\
+		Treatment Value &        0 &        0 & $\sigma_{Y}/3$ & $\sigma_{Y}/3$\\
+		Draws &       200 & 200 & 200 & 200\\
+		\hline \multicolumn{5}{l}{\textbf{Percent Rejecting Null Hypothesis}} \\
+		Fixed Effects &      20\% &      40\%& 49\%& \textbf{96}\%\\
+		FE Robust &       \textbf{2\%} &       \textbf{2\%}& 44\%& 67\%\\
+		FE Clustered by State &         29\% &         50\%& 62\% & 51\%\\
+		FE AR(1) Process &         \textbf{2\%} &         \textbf{0\%}& 28\%& \textbf{98\%}\\
+		Panel Newey-West &         9\% &         18\%& 59\% & 84\%\\
+		Block Bootstrap &        \textbf{2\%} &         \textbf{2\%}& 33\%& 67\%\\
+		\hline \hline 
+		\multicolumn{5}{l}{\footnotesize 95\% confidence interval used to test null hypothesis. Bold  }\\
+		\multicolumn{5}{l}{\footnotesize indicates values that either do not over-reject null when true }\\
+		\multicolumn{5}{l}{\footnotesize  treatment is zero or do not under-reject null when true  }\\
+		\multicolumn{5}{l}{\footnotesize treatment is non-zero. }\\
+	\end{tabular}	
+	\label{tab:mc}
 \end{table}
 
-\begin{table}[H]
-	\centering
-	\input{resources/main_diff_em_pop.tex}
-	\caption{Impact of health reform on low capital industries}
-	\label{tab:capital_em}
-\end{table}
-
-
-\section{Empirical Results}
+\section{Findings}
 \label{sec:results}
 
-In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability an individual becomes an entrepreneur. Given the constraints of our dataset, we focus on the change in our variables of interest per million people. In some of our specifications, we measure this per county ($Change_{ct}$) while in others we measure rates per 2 or 4 digit NAICS industry by county ($Change_{cit}$). 
+\subsection{Importance of Control Group}
 
-\subsection{Overall Impact}
+Table \ref{tab:control} summarizes our first finding as a test of Proposition 1. We run the diff-in-diff modeled by equation 1 against the yearly percentage change in self employed population. Over our period of interest, about 3.29\% of Massachusetts' population was unincorporated, self employed individuals. Our column 1 result suggests the percentage of self-employed residents increased by 0.08 per year as a result of health care reform, for an overall increase of 0.4\% by the end of our period of interest. This result compares well to the Truzeman \footnote{Tuseman} result of 0.6\% which measured the impact of the same shock on self employment using an IV approach on aggregate state data. 
 
-To test Proposition 1, we first apply a diff-in-diff approach with counties in Massachusetts as the control group and counties in the rest of New England as control. If the reform improved the return to entrepreneurship for some workers, our treatment indicator should be positive. 
-\begin{align}
-Change_{ct} = \alpha_c + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
-\end{align}
-
-Here $Change_{ct}$ represents the change in our variable of interest per million residents in year $t$ and county $c$. The model includes fixed effects for year ($\delta$) and county ($\alpha$). Model (1) is estimated in Table \ref{tab:prop1}. We cluster by county rather than by state because as Garthwaite \footnote{GW} et al show using a Monte Carlo method in their online appendix, with a single treatment cluster standard errors can be too small. Clustering by county lowers our chances of incorrectly rejected our null hypothesis. To illustrate, we provide Model (1) state clustered results in Table \ref{tab:prop1_state}. 
+However we find the magnitude of our results to be sensitive to the control group in use. Column 2 uses the border county procedure to attempt a closer match between our treatment and control groups. Column 3 uses the synthetic control group process. Both results in similar standard errors but magnitudes that are not distinguishable from zero. 
 
 \begin{center}
 	\begin{table}[H]
 		\centering
-		\caption{Model (1) estimator with other New England states as control} 
-		\input{resources/prop1.tex}	
-		\label{tab:prop1}
+			\caption{Model (1) estimator of yearly percentage change in self-employment} 
+		\input{resources/prop1_control.tex}	
+		\label{tab:control}
 	\end{table}		
 \end{center}
 
-\begin{center}
-	\begin{table}[H]
-		\centering
-		\caption{Model (1) estimator with other New England states as control} 
-		\input{resources/prop1_state.tex}	
-		\label{tab:prop1_state}
-	\end{table}		
-\end{center}
 
-Next we use a synthetic control approach as an alternative empirical strategy to test Model (1). For each county in Massachusetts and each variable of interest, we construct a synthetic control using the county's level of urbanization, uninsured rate, population age, the presence of children as well as pretreatment trends \footnote{Abadie}. The synthetic county is constructed from all counties in the US outside of Massachusetts. Results are provided in Table \ref{tab:prop1_synth}.
-
-\begin{center}
-	\begin{table}[H]
-		\centering
-		\caption{Model (1) estimator with synthetic control} 
-		\input{resources/prop1_synth.tex}	
-		\label{tab:prop1_synth}
-	\end{table}		
-\end{center}
-
-When using New England as a control group under county clustering we see a highly significant positive estimate on the change in rate of self-employed individuals and non-employer establishment creation in Massachusetts after our shock. However the synthetic control reduces the point estimates and eliminates their significance. As shown in Figure \ref{fig:state_contrast}, the synthetic control has a more reasonable pretrend. We are therefore unable to reject the null hypothesis that the 2006 health insurance shock had no effect on overall entrepreneurship using a general difference-in-difference approach.
-
-\begin{figure}[H]
-	\centering
-	\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/graphpoint_se_all_basic}
-		\caption{Other New England states as control}
-	\end{subfigure}
-		\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/graphpoint_se_synth}
-		\caption{Synthetic control}
-	\end{subfigure}
-	\caption{Treatment Effect for Self-Employed Individuals}
-	\label{fig:state_contrast}
-\end{figure}
-
-For the remainder of the paper we focus on the synthetic results since the control group does a better job of satisfying the parallel trends assumption needed for differences in difference analysis.
 
 \subsection{Non-profit Heterogeneity}
 
@@ -1034,6 +1033,17 @@ Dhingra 2013:
 Masshealth on coverage rates. 2007 as treatment, using states as control. Contrast with Mass being special for entrepreneurship
 
 Dave, D. M., Decker, S., Kaestner, R., Simon, K. The Effect of Medicaid Expansions in the late 1980s and early 1990s on the Labor Supply of Pregnant Women. American Journal of Health Economics, Forthcoming. Forthcoming 
+
+INFERENCE WITH DIFFERENCE-IN-DIFFERENCES AND OTHER
+PANEL DATA
+Stephen G. Donald and Kevin Lang*
+
+Cameron, A. C., J. B. Gelbach, and D. L. Miller (2008): “Bootstrap-based im- provements for inference with clustered errors,” Review of Economics and Statistics, 90, 414–427
+
+Resampling Inference With Complex Survey Data
+Author(s): J. N. K. Rao and C. F. J. Wu
+Source: Journal of the American Statistical Association, Vol. 83, No. 401 (Mar., 1988), pp. 231-
+241
 
 \end{comment}
 
