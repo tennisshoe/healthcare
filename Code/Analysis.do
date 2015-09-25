@@ -6,8 +6,20 @@ set more off, perm
 set emptycells drop
 global dir "~/Healthcare"
 if "$S_OS" == "Windows" { 
-	global dir "z:\Healthcare" 
+	global dir "C:\Users\Ankur\SkyDrive\Research\Healthcare" 
+	* global dir "z:\Healthcare" 
 }
+
+****
+* This program uses a modified version of synth.ado
+* The following lines are commented out
+*
+* mata: roundmat("`wsol'")
+* mat `wsol' = matout
+* 
+* Found that rounding dropped counties with small weights, causing inconsistancies
+* between treatment and synthetic control variables
+****
 
 program define BuildNewEnglandData
 
@@ -3921,42 +3933,66 @@ program define CreateSynthetic
 	local MA = `1'
 	local y_variable `2'
 	local base_year = `3'
+
+	local delete_naics 0
+	capture confirm variable naics
+	if _rc {
+		gen naics = 0
+		local delete_naics 1
+	} 	
 	
-	bysort stcode cntycd: egen c = count(year)
+	bysort panel: egen c = count(year) if stcode == `MA'
 	su c
 	local max_periods = r(max)	
 	drop c	
 	
-	gen e = 2 if stcode == `MA'
-	expand e, gen(d)
-	drop e
-	su panel
-	replace panel = panel + r(max) + 1 if d == 1
-	replace `y_variable' = . if d == 1
-	replace stcode = 0 if d == 1
+	levelsof naics if stcode == `MA' & !missing(`y_variable'), local(industries)
+	foreach industry of local industries {
 		
-	levelsof cntycd if stcode == `MA' & !missing(`y_variable'), local(counties)
-	foreach county of local counties {
+		gen e = 2 if stcode == `MA'
+		expand e, gen(d)
+		drop e
+		replace panel = -panel if d == 1
+		replace `y_variable' = . if d == 1
+		replace stcode = 0 if d == 1
+			
+		levelsof cntycd if stcode == `MA' & naics == `industry' & !missing(`y_variable'), local(counties)
+		foreach county of local counties {
 
-		count if stcode == `MA' & cntycd == `county' & !missing(`y_variable')
-		if r(N) == `max_periods' {							
-			display "Merging County:`county'"
-			merge n:1 stcode cntycd using "$dir/tmp/synth_`county'_all_`y_variable'.dta", assert(1 3)
-
-			gen w_diff = synth_weight * `y_variable'
-			bysort year: egen c_diff = total(w_diff)
-			replace `y_variable' = c_diff if d == 1 & stcode == 0 & cntycd == `county'
-			drop w_diff c_diff synth_weight _merge
+		
+			local filename "$dir/tmp/synth_`county'_`industry'_`y_variable'.dta"
+			capture: confirm file `filename'
+			if _rc {
+				display "Dropping County:`county' Industry:`industry'"
+				replace `y_variable' = . if stcode == `MA' & cntycd == `county' & naics == `industry'					
+			} 
+			else {				
+				count if stcode == `MA' & cntycd == `county' & naics == `industry' & !missing(`y_variable')
+				if r(N) == `max_periods' {							
+					display "Merging County:`county' Industry:`industry'"
+					merge n:1 stcode cntycd naics using "$dir/tmp/synth_`county'_`industry'_`y_variable'.dta", assert(1 3)
+					gen w_diff = synth_weight * `y_variable'
+					bysort year: egen c_diff = total(w_diff)
+					replace `y_variable' = c_diff if d == 1 & stcode == 0 & cntycd == `county' & naics == `industry'
+					drop w_diff c_diff synth_weight _merge
+				}
+				else {
+					display "Not full panel County:`county' Industry:`industry'"
+					replace `y_variable' = . if stcode == `MA' & cntycd == `county' & naics == `industry'										replace `y_variable' = . if stcode == `MA' & cntycd == `county'
+				}
+			}
 		}
-		else {
-			replace `y_variable' = . if stcode == `MA' & cntycd == `county'
-		}
+		
+		drop d
+		
 	}
-	
-	drop d
 
 	capture: drop treatment
 	gen treatment = stcode == 25 & year > `base_year'
+	
+	if `delete_naics' {
+		drop naics
+	}
 	
 end
 
@@ -4311,23 +4347,22 @@ program define GenerateSynthetic
 	
 	* set graphics off
 	local treatment 2008
-	local MA 25
+	local MA 25		
+
+	local delete_naics 0
+	capture confirm variable naics
+	if _rc {
+		gen naics = 0
+		local delete_naics 1
+	} 
 	
-	bysort stcode cntycd: egen c = count(year)
+	bysort panel: egen c = count(`y_variable') if stcode == `MA'
 	su c
-	local max_periods = r(max)	
-	drop c			
-		
-	local titles
+	local max_periods = r(max)
+	drop c
 	
 	levelsof cntycd if stcode == `MA' & !missing(`y_variable'), local(counties)
 	foreach county of local counties {
-
-		* also skip if county did not have data for all years
-		count if stcode == `MA' & cntycd == `county' & !missing(`y_variable')
-		if r(N) != `max_periods' {
-			continue
-		}
 
 		preserve
 
@@ -4348,45 +4383,62 @@ program define GenerateSynthetic
 			drop st_mean
 		}
 		drop tag
+
+		levelsof naics if stcode == `MA' & cntycd == `county' & !missing(`y_variable'), local(industries)
+		foreach industry of local industries {
+
+			* also skip if county did not have data for all years
+			count if stcode == `MA' & cntycd == `county' & naics == `industry' & !missing(`y_variable')
+			if r(N) != `max_periods' {
+				continue
+			}
+		
+			* drop counties that are missing our y_variable in some years
+			bysort stcode cntycd: egen t_variable = count(`y_variable') if naics == `industry'
+			su t_variable
+			drop if t_variable < r(max) & stcode != `MA' & naics == `industry'
+			drop t_variable
 			
-		* drop counties that are missing our y_variable in some years
-		by stcode cntycd: egen t_variable = count(`y_variable') 
-		drop if t_variable < `max_periods' & stcode != `MA'			
-		drop t_variable
-		
-		local filename "$dir/tmp/synth_`county'_all_`y_variable'"
-		* should only be one
-		levelsof panel if stcode == `MA' & cntycd == `county', local(trunit)
-		levelsof panel if stcode != `MA', local(counit)	
+			local filename "$dir/tmp/synth_`county'_`industry'_`y_variable'"
+			* should only be one
+			levelsof panel if stcode == `MA' & cntycd == `county' & naics == `industry', local(trunit)
+			levelsof panel if stcode != `MA' & naics == `industry', local(counit)	
 
-		levelsof year if panel == `trunit', local(year_matches)
-		local year_var
-		foreach year_match of local year_matches {
-			local year_var `year_var' `y_variable'(`year_match')
-		}
+			count if stcode != `MA' & naics == `industry' & year == 2007
+			if(r(N) > 1) {			
+				levelsof year if panel == `trunit' & naics == `industry', local(year_matches)
+				local year_var
+				foreach year_match of local year_matches {
+					local year_var `year_var' `y_variable'(`year_match')
+				}
 
-		synth `y_variable' `year_var' ///
-			log_income percent_20_to_24 percent_urban percent_uninsured ///
-			, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
-			keep(`filename') replace	
+				synth `y_variable' `year_var' ///
+					log_income percent_20_to_24 percent_urban percent_uninsured ///
+					, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
+					keep(`filename') replace	
+						
+				* sometimes we have fewer controls than years which causes merge to 
+				* fail later because there are multiple missing _Co_Number values
+				* due to the way synth saves its output
+				use `filename', clear			
+				drop if missing(_Co)
+				drop _Y_treated _Y_synthetic _time
+				save `filename', replace
+
+				restore, preserve
 				
-		* sometimes we have fewer controls than years which causes merge to 
-		* fail later because there are multiple missing _Co_Number values
-		* due to the way synth saves its output
-		use `filename', clear			
-		drop if missing(_Co)
-		drop _Y_treated _Y_synthetic _time
-		save `filename', replace
-
-		restore, preserve
+				bysort stcode cntycd: keep if _n == 1
+				ren panel _Co_Number
+				merge 1:1 _Co_Number using `filename'
+				keep if _merge == 3
+				ren _W_Weight synth_weight
+				keep stcode cntycd naics synth_weight
+				save `filename', replace
+				
+				restore, preserve
+			}
 		
-		bysort stcode cntycd: keep if _n == 1
-		ren panel _Co_Number
-		merge 1:1 _Co_Number using `filename'
-		keep if _merge == 3
-		ren _W_Weight synth_weight
-		keep stcode cntycd synth_weight
-		save `filename', replace
+		}
 		
 		restore
 								
@@ -4394,6 +4446,10 @@ program define GenerateSynthetic
 	
 	drop log_income percent_20_to_24 percent_household_with_children percent_uninsured percent_urban
 
+	if `delete_naics' {
+		drop naics
+	}
+	
 end
 
 program define Results_Control
@@ -4479,13 +4535,24 @@ program define Results_Control
 	gen state_fe = 0
 	gen county_fe = 0
 	
-	foreach y_variable of varlist diff_se_pop diff_ne_pop diff_em_pop {
+	local y_variable diff_se_pop
+	* foreach y_variable of varlist diff_se_pop diff_ne_pop diff_em_pop {
 
 		* Standard regression compariable to previous work
 		eststo DD_SE_NE: xtreg `y_variable' treatment ib`base_year'.year state_fe county_fe [pw=pweight] if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
 		estadd local control "New England" 
 		estadd local cluster "County"	
 		estadd local weight "Population"		
+
+		preserve
+		levelsof year, local(years)
+		foreach year of local years {
+			if `year' == `base_year' | `year' == 2000 continue
+			gen iTYear`year' = (year == `year') & (stcode == 25)
+		}
+		xtreg `y_variable' ib`base_year'.year iTYear* [pw=pweight] if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust	
+		GraphPoint iTYear `base_year' "Self-Employed in Massachusetts versus New England" "_`y_variable'_new_england"
+		restore
 		
 		* using border counties	
 		preserve
@@ -4507,6 +4574,17 @@ program define Results_Control
 		estadd local control "Synthetic" 
 		estadd local cluster "County"	
 		estadd local weight "Population"		
+
+		preserve
+		levelsof year, local(years)
+		foreach year of local years {
+			if `year' == `base_year' | `year' == 2000 continue
+			gen iTYear`year' = (year == `year') & (stcode == 25)
+		}
+		xtreg `y_variable' ib`base_year'.year iTYear* [pw=pweight] if inlist(stcode, 0, 25), fe robust
+		GraphPoint iTYear `base_year' "Self-Employed in Massachusetts versus Synthetic" "_`y_variable'_synthetic"
+		restore
+				
 		drop if stcode == 0
 
 		esttab DD_SE_NE DD_SE_BO DD_SE_SY using $dir/tmp/prop1_control_`y_variable'.tex, ///
@@ -4517,7 +4595,53 @@ program define Results_Control
 			indicate("Year FE = *.year" "State FE = state_fe" "County FE = county_fe") ///
 			sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01) 	
 		
-	}
+	* }
+
+end
+
+program define Results_Nonprofit
+
+	use $dir/tmp/nonemployedLong.dta, clear
+	* get rid of the same naics industies we dropped above
+	drop if naics >= 9900 & naics < 10000
+	* above 6240 consists of things like homeless shelters, 
+	drop if naics >= 6200 & naics < 6240
+	drop if naics >= 9500 & naics < 9600
+	drop if year < 2000
+	ren small ne_est        
+	keep ne_est stcode cntycd naics year    
+			
+	* drop naics that counties do not have for all years
+	bysort stcode cntycd naics: egen year_count = count(year)
+	drop if year_count != 13
+	drop year_count
+			
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge                                     
+	* for better readability dividing population by one million
+	replace population = population / 1000000       
+			
+	egen panel =  group(stcode cntycd naics)
+	tsset panel year                
+	sort panel year 
+
+	gen ne_pop = ne_est / population
+	gen diff_ne_pop = D.ne_pop
+	
+	local y_variable diff_ne_pop
+
+	keep naics year panel `y_variable' stcode cntycd
+	drop if year == 2000
+	
+	local base_year 2007	
+	GenerateSynthetic "`y_variable'"
+	CreateSynthetic 25 "`y_variable'" `base_year'
+	keep if inlist(stcode, 0, 25)
+	gen treatment_dd = (stcode == 25) & (year > `base_year')
+	xtreg `y_variable' treatment_dd ib2007.year if stcode == 25, fe robust 
 
 end
 
@@ -6606,3 +6730,5 @@ end
 //BuildNewEnglandData
 //SummaryStats
 //SummaryStats_intraMA
+
+Results_Nonprofit

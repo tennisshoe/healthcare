@@ -1,7 +1,8 @@
 clear all
 global dir "~/Healthcare"
 if "$S_OS" == "Windows" { 
-	global dir "z:\Healthcare" 
+	global dir "C:\Users\Ankur\SkyDrive\Research\Healthcare" 
+	* global dir "z:\Healthcare" 
 }
 
 set more off

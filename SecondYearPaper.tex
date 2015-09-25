@@ -78,7 +78,7 @@ Uninsurance versus access to insurance
 
 Previous research on whether access to health insurance affects entrepreneurial rates have produced mixed results. Holtz-Eakin et al.\footnote{HOLTZ-EASKIN} test this relationship using both variance in spousal insurance coverage and regulation requiring the ability to continue coverage after employment ends\footnote{Consolidated Omnibus Budget Reconciliation Act of 1985 (COBRA)}. They find no result and posit entrepreneurs would not be dissuaded by concerns over health insurance. More recently the Affordable Care Act of 2010 required health insurance plans to cover dependents up to the age of 26. Bailey uses this policy change to test whether improving access to health insurance increases entrepreneurial rates and finds no effect. 
 
-In contrast, both Wellington \footnote{WELLINGTON} and Fairie et al \footnote{Fairie et all} provide evidence that having a spouse with insurance increases the propensity to become an entrepreneur. Fairie et al \footnote{Fairie et all} also exploit the Medicare cutoff at age 65 to suggest entrepreneurship increases at the discontinuity. Heim and Lurie analyze tax filing data using the 2006 health care reform in Massachusetts as a shock which increased access to health insurance. They find a small decrease in the overall probability a taxpayer earns a majority of their income from self-employment which varied by age group. Becker and Tuzeman apply census data to the same shock to test the connection between insurance rates and self-employment rates. They estimate that a 1\% increase in health insurance rates generates a 0.06\% increase in the self-employment rate. 
+In contrast, both Wellington \footnote{WELLINGTON} and Fairie et al \footnote{Fairie et all} provide evidence that having a spouse with insurance increases the propensity to become an entrepreneur. Fairie et al \footnote{Fairie et all} also exploit the Medicare cutoff at age 65 to suggest entrepreneurship increases at the discontinuity. Olds \footnote{Olds} targets entrepreneurs with children and finds providing health insurance to previously uninsured children increases self-employment rates in the household by 23\%. Heim and Lurie analyze tax filing data using the 2006 health care reform in Massachusetts as a shock which increased access to health insurance. They find a small decrease in the overall probability a taxpayer earns a majority of their income from self-employment which varied by age group. Becker and Tuzeman apply census data to the same shock to test the connection between insurance rates and self-employment rates. They estimate that a 1\% increase in health insurance rates generates a 0.06\% increase in the self-employment rate. 
 
 The more general job lock literature has been more consistent in showing that health
 care affects employment incentives. Early work by Gruber and Madrain found that enabling
@@ -89,6 +89,8 @@ Dhaval et al. show increased Medicare enrollment led to lower employment rates f
 
 The source of variation used this paper, the Massachusetts reform of 2006, has been empirically shown to have affected health outcomes. Toussaint et al. \footnote{Toussaint} find uninsurance rates dropped in trauma centers. Miller uses both within state variation in insurance rates and the rest of New England as a control to suggest non-urgent ER visits dropped after the reform \footnote{Miller 2012}.  Summers, Long, and Baicker \footnote{Summers long baicker 2014} find mortality rates dropped as a result of the reform. 
 
+A number of studies have found a strong, negative relationship between between tax rates and the decision to become an entrepreneur. Early work by Gentry and Hubbard \footnote{Gentry Hubbard} called out a number of possible channels for the tax rates to influence entrepreneurship, including changes in the relative payoff of wages versus entrepreneurial returns and incorporation for the purpose of shifting income to corporate tax schedules. Gentry and Hubbard use US Census panel data to estimate how changes in effective marginal tax rates impact the propensity for an individual to become self-employed and find a significant effect. Overall their dataset has about 3\% of individuals entering self-employment over the panel time period; they estimate a 5\% increase in tax rates lowers the probably of self-employment to around 2.75\%. Cullen and Gordon \footnote{Cullen Gorden} build a theoretical model that enables them to identify various channels linking tax rates to entrepreneurship and use income tax data to find a large effect on risky businesses that incur losses early on. Da Rin \footnote{Da Rin} uses firm level panel data for Western Europe and finds drops in corporate tax rates increases firm entry. Djankov et al \footnote{Djankov} finds similar results with a global set of countries. 
+
 \begin{comment}
 
 The taxation literature has also explored how
@@ -98,7 +100,7 @@ self-employment.
 
 \end{comment}
 
-To summarize, although there is uncertainty about the impact of health insurance on entrepreneurship, there is strong evidence that health insurance influences employment decisions  and that the Massachusetts reform changed the state's health insurance market. 
+To summarize, although there is uncertainty about the impact of health insurance on entrepreneurship, there is strong evidence that the Massachusetts reform changed the state's health insurance market, access to health insurance influences employment decisions and tax rates affect firm entry rates.
 
 \section{Massachusetts Reform}
 \label{sec:reform}
@@ -147,7 +149,6 @@ If there is a shock that creates a market for non-group health insurance at cost
 $$U(w,1) \ge \max\{U(r,0),U(r-c,1)\}$$
 
 This should shift some mass of workers to become entrepreneurs as long as some workers value health insurance more than the cost on the non-group health market and for those workers
-
 $$U(w,1) < U(r-c,1)$$
 
 So this model would predict that the health-care shock increases entrepreneurship. 
@@ -302,16 +303,16 @@ Our first control consists of counties in New England outside of Massachusetts. 
 
 For a more targeted approach, we use border matching as our second control. Here our treatment group consists of Massachusetts counties that share a border with another state. This pulls out the cities of Boston and Cambridge. Our control group consists of counties in Connecticut, New Hampshire, Rhode Island, Vermont and New York that border Massachusetts. We would expect this method to help ensure our control and treatment groups are similar if geographically close counties  have for example more similar economic activity than distant counties. 
 
-Finally we employ a synthetic control method drawing on counties across all US states other than Massachusetts. Our approach mirrors the procedure used in Abadie (???)\footnote{Abadie}. For each county in Massachusetts we generate a synthetic pair as a control. We first prune the matching pool by removing counties that significantly differ from the Massachusetts county in either level of urbanization, uninsured rate, population age, or the frequency of children in a household. We then assign weights to the pruned set of counties in order to minimize the difference in our outcome variable before our shock. This has the benefit of removing any pre-trend from our natural experiment as seen in Figure \ref{fig:state_contrast}. The downside is that the matching is done algorithmically and may therefore be counterintuitive. In our case the procedure yielded arguably valid results; self-employment rates in Boston (Suffolk County, MA) before 2008 most closely matched a combination the counties for Ann Arbor, MI (57\% weight), Lexington, KY (25\% weight) and other various counties across the US. 
+Finally we employ a synthetic control method drawing on counties across all US states other than Massachusetts. Our approach mirrors the procedure used in Abadie (???)\footnote{Abadie} although we slightly modify their source code to better account for rounding errors in our specific use case. For each county in Massachusetts we generate a synthetic pair as a control. We first prune the matching pool by removing counties that significantly differ from the Massachusetts county in either level of urbanization, uninsured rate, population age, or the frequency of children in a household. We then assign weights to the pruned set of counties in order to minimize the difference in our outcome variable before our shock. This has the benefit of removing any pre-trend from our natural experiment as seen in Figure \ref{fig:state_contrast}. The downside is that the matching is done algorithmically and may therefore be counterintuitive. In our case the procedure yielded arguably valid results; self-employment rates in Boston (Suffolk County, MA) before 2008 most closely matched a combination the counties for Ann Arbor, MI (57\% weight), Lexington, KY (25\% weight) and other various counties across the US. 
 
 \begin{figure}[H]
 	\centering
 	\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/graphpoint_se_all_basic}
+		\includegraphics[width=\textwidth]{tmp/graphpoint_diff_se_pop_new_england}
 		\caption{Other New England states as control}
 	\end{subfigure}
 		\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/graphpoint_se_synth}
+		\includegraphics[width=\textwidth]{tmp/graphpoint_diff_se_pop_synthetic}
 		\caption{Synthetic control}
 	\end{subfigure}
 	\caption{Treatment Effect for Self-Employed Individuals}
@@ -455,8 +456,8 @@ Table \ref{tab:mc} presents the results. We see that fixed effects under AR(1) a
 		Treatment Value &        0 &        0 & $\sigma_{Y}/3$ & $\sigma_{Y}/3$\\
 		Draws &       200 & 200 & 200 & 200\\
 		\hline \multicolumn{5}{l}{\textbf{Percent Rejecting Null Hypothesis}} \\
-		Fixed Effects &      20\% &      40\%& 49\%& \textbf{96}\%\\
-		FE Robust &       \textbf{2\%} &       \textbf{2\%}& 44\%& 67\%\\
+		Fixed Effects OLS &      20\% &      40\%& 49\%& \textbf{96}\%\\
+		FE Huber-White &       \textbf{2\%} &       \textbf{2\%}& 44\%& 67\%\\
 		FE Clustered by State &         29\% &         50\%& 62\% & 51\%\\
 		FE AR(1) Process &         \textbf{2\%} &         \textbf{0\%}& 28\%& \textbf{98\%}\\
 		Panel Newey-West &         9\% &         18\%& 59\% & 84\%\\
@@ -478,37 +479,20 @@ Table \ref{tab:mc} presents the results. We see that fixed effects under AR(1) a
 Table \ref{tab:control} summarizes our first finding as a test of Proposition 1. We run the diff-in-diff modeled by equation 1 against the yearly percentage change in self employed population. Over our period of interest, about 3.29\% of Massachusetts' population was unincorporated, self employed individuals. Our column 1 result suggests the percentage of self-employed residents increased by 0.08 per year as a result of health care reform, for an overall increase of 0.4\% by the end of our period of interest. This result compares well to the Truzeman \footnote{Tuseman} result of 0.6\% which measured the impact of the same shock on self employment using an IV approach on aggregate state data. 
 
 However we find the magnitude of our results to be sensitive to the control group in use. Column 2 uses the border county procedure to attempt a closer match between our treatment and control groups. Column 3 uses the synthetic control group process. Both results in similar standard errors but magnitudes that are not distinguishable from zero. 
-
 \begin{center}
 	\begin{table}[H]
 		\centering
 			\caption{Model (1) estimator of yearly percentage change in self-employment} 
-		\input{resources/prop1_control.tex}	
+		\input{tmp/prop1_control_diff_se_pop.tex}	
 		\label{tab:control}
 	\end{table}		
 \end{center}
 
+We interpret these findings to mean any possible effect our shock had on self-employment is likely to be too small to detect using the publicly available census data on individuals. We believe the sensitivity to control explains why Tuzeman \footnote{Tuzemen} and Hein \footnote{Hein} find directionally different results. 
 
+\subsection{No Long Run Tax Impact}
 
-\subsection{Non-profit Heterogeneity}
-
-Proposition 2 predicts that non-profits were more strongly impacted by the health care reform since there is no long term cost of increased taxes that balances the short term benefit of health care access. To test this prediction, we use Economic Census data that provides information about the number of tax paying and tax-exempt establishments at the 4 digit NAICS code industry level.  
-
-Our first specification restricts our observations to counties in Massachusetts. The treatment group consists of industries where over half of all establishments were exempt from federal taxes, excluding establishments in the health care industry. We interpret our coefficient of interest as a lower bound estimate of the health care shock impact. It is a lower bound because for-profit industries may have also benefited and we are measuring the difference between the two sets of industries.
-\begin{align}
-Change_{cit} = \alpha_c + \gamma_i + \delta_t + \beta \, \mathbf{1}\{\text{non-profit industry}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
-\end{align}
-
-Here $Change_{cit}$ represents the number of net new establishments created per million residents in year $t$, county $c$ and industry $i$. The model includes fixed effects for year ($\delta$), county ($\alpha$) and industry ($\gamma$). Since our self-employment data set lacks industry information we only apply Model (2) to our non-employer and small business data sets. 
-
-Model (2) leaves open the possibility of another shock happening at the same time that also differentially affected non-profit industries. The results would be invalid if for example the 2008 recession was relatively milder for non-profit firms than for for-profit firms. To control for this, we extend our approach to a triple difference model which should account for shocks that both affected Massachusetts and our synthetic control. 
-\begin{align}
-Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
-& + \beta \, \mathbf{1}\{\text{non-profit industry}\} \cdot \mathbf{1}\{\text{year > 2007}\}  \cdot \mathbf{1}\{\text{county in  MA}\} \nonumber  \\
-& + \epsilon_{ict}
-\end{align}
-
-Our results for both specifications are presented in Table \ref{tab:nonprofit} \footnote{Robust standard errors clustered on county and 4 digit NAICS industry used. US wide 2012 Economic Census industry data used determine 4 digit NAICS codes with over 50\% of federal tax exempt establishments. Health care related establishments and state-wide establishments dropped.}. Although the difference-in-difference model suggests non-profit non-employer establishments differentially benefited from the shock, the impact is attenuated and significance lost once we include our synthetic state as a control. We interpret this as evidence that the long term tax implications of health care subsidies are not attenuating entrepreneurship rates. 
+Table \ref{tab:nonprofit} shows our results testing Proposition 2 claim that non-profit firm creation should increase faster than for-profit firm creation. Although column 1's results from running equation 2 suggests a noticeable effect, our estimate shrinks and loses its significance in column 2 once we apply the triple diff specified in equation 3. We interpret this as evidence that the long term tax expectations of health care subsidies are not attenuating entrepreneurship rates. 
 
 \begin{table}[H]
 	\centering
