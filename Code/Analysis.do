@@ -4416,6 +4416,8 @@ program define GenerateSynthetic
 					log_income percent_20_to_24 percent_urban percent_uninsured ///
 					, trunit(`trunit') trperiod(`treatment') counit(`counit') ///
 					keep(`filename') replace	
+					
+				save $dir/tmp/synth, replace
 						
 				* sometimes we have fewer controls than years which causes merge to 
 				* fail later because there are multiple missing _Co_Number values
@@ -4425,7 +4427,7 @@ program define GenerateSynthetic
 				drop _Y_treated _Y_synthetic _time
 				save `filename', replace
 
-				restore, preserve
+				use $dir/tmp/synth, clear
 				
 				bysort stcode cntycd: keep if _n == 1
 				ren panel _Co_Number
@@ -4435,7 +4437,7 @@ program define GenerateSynthetic
 				keep stcode cntycd naics synth_weight
 				save `filename', replace
 				
-				restore, preserve
+				use $dir/tmp/synth, clear
 			}
 		
 		}
