@@ -337,6 +337,8 @@ Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_
 & + \epsilon_{ict}
 \end{align}
 
+Although our observations are based on NAICS codes at the 4 digit level, we apply fixed effects at the 2 digit NAICS code level in order to have a manageable number of fixed effect coefficients to estimate given the constraints of our data set. 
+
 \subsection{Capital Requirement Heterogeneity}
 
 Proposition 3 states that as long as opportunities for low capital entrepreneurship are at least as prevalent as opportunities for high capital entrepreneurship, we should see that the health insurance shock increased low capital entrepreneurship relative to high capital entrepreneurship. We first test this proposition using Model (4). 
@@ -492,71 +494,64 @@ We interpret these findings to mean any possible effect our shock had on self-em
 
 \subsection{No Long Run Tax Impact}
 
-Table \ref{tab:nonprofit} shows our results testing Proposition 2 claim that non-profit firm creation should increase faster than for-profit firm creation. Although column 1's results from running equation 2 suggests a noticeable effect, our estimate shrinks and loses its significance in column 2 once we apply the triple diff specified in equation 3. We interpret this as evidence that the long term tax expectations of health care subsidies are not attenuating entrepreneurship rates. 
+Table \ref{tab:nonprofit} shows our results testing Proposition 2 claim that non-profit firm creation should increase faster than for-profit firm creation. Although column 1's results from running equation 2 suggests a noticeable effect, our estimate shrinks and loses its significance in column 2 once we apply the triple diff specified in equation 3 with the rest of New England as a control. Similarly, column 3 applies equation 3 using only border counties within Massachusetts and control with no significant effect. We interpret this as evidence that the long term tax expectations of health care subsidies are not attenuating entrepreneurship rates. 
+
+\begin{table}[H]
+	\centering
+	\input{tmp/nonprofit.tex}
+	\caption{Impact of health reform on non-profit entrepreneurship}
+	\label{tab:nonprofit}
+\end{table}
+
+\begin{comment}
 
 \begin{table}[H]
 	\centering
 	\input{resources/nonprofit.tex}
 	\caption{Impact of health reform on non-profit entrepreneurship}
-	\label{tab:nonprofit}
 \end{table}
+
+\end{comment}
 
 \subsection{Capital Requirement Heterogeneity}
 
-Proposition 3 states that as long as opportunities for low capital entrepreneurship are at least as prevalent as opportunities for high capital entrepreneurship, we should see that the health insurance shock increased low capital entrepreneurship relative to high capital entrepreneurship. We first test this proposition using Model (4). 
-\begin{align}
-Change_{cit} =  \alpha_c + \gamma_i+ \delta_t + \beta \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year >= 2008}\} + \epsilon_{ict}
-\end{align}
+Table \ref{tab:capital_ne} summarizes the results of testing Proposition 3 using our dataset of non-employing establishments. Column 1 uses the diff-in-diff estimator of equation 4 to show overall low capital industries grew slower than high capital industries after our shock. Column 2 
 
-As with our non-profit analysis we continue to define industry by 4 digit NAICS codes. We use the Survey of Business Owners (SBO) Public Use Microdata Sample (PUMS) from 2007 to determine which industries have low capital requirements. Since the SBO PUMS data only reports on 2 digit NAICS codes, we calculate the percentage of businesses that required less than \$1000 of startup capital for each 2 digit NAICS code and match the 2 digit NAICS codes with our 4 digit industry codes. We consider industries below the mean of the range of percentages as low capital industries. The PUMS data provides the capital requirements by employment size so we customize our definition of low capital industries for our two establishment data sets. 
+ for non-employers and Table \ref{tab:capital_em} summarizes our small business results. Our small business results do now show statistical significance. Our Model (4) difference and difference estimator for non-employers shows a significant drop in establishment creation rates for low capital enterprises over high capital enterprises. The estimate of Model (5) which accounts for non-Massachusetts specific shocks attenuates our results but does not remove the significance. To put our results in perspective, overall Massachusetts had on average an increase of 639 non-employer establishments per year per million people. We have 100 NAICS 4 digit industries represented in our dataset, so the average increase is on the order of 6 establishments per year per million people per industry. Our point estimate of -16 therefore suggests a large and meaningful impact on the number of low capital establishments relative to high capital establishments as a result of the health care shock for non-employers. The results from Model (6) and Model (7) indicate the large impact may have been a short term phenomenon for non-employers. 
 
-Model (4) leaves open the possibility of another shock happening at the same time that also differentially affected low capital industries. We therefore include the triple difference Model (5). 
-\begin{align}
-Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
-& + \beta \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year >= 2008}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
-& + \epsilon_{cit}
-\end{align}
-
-Finally for Proposition 4 we modify the diff-in-diff to see if the short term treatment results was stronger than the long term treatment results in Model (6) with a corresponding triple differences estimator in Model (7). 
-\begin{align}
-Change_{cit} & =  \alpha_c + \gamma_i+ \delta_t  \nonumber + \beta_{0} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year in initial shock}\} \nonumber \\
-& + \beta_{1} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year > initial shock}\} + \epsilon_{ict} \\
-Change_{cit} & =  \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
-& + \beta_{0} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year in initial shock}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
-& + \beta_{1} \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year > initial shock}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
-& + \epsilon_{cit}
-\end{align}
-
-Unfortunately our theory does not provide a clear mechanism for determining what is short term versus long term. Some opportunities made possible by the health care shock could be executed on immediately while others may require careful planning over a significant amount of time. We use Figure \ref{fig:ddd} as a guide. It plots the Model (5) residuals over time. We observe there is an attenuation after three years of treatment for non-employers. We think the most useful test of Proposition 4 would be to have the initial shock be considered as years 2008 to 2010. If we do not see a statistical significant drop in this case, then we can rule out Proposition 4 with some confidence. 
-\begin{figure}[H]
+\begin{table}[H]
 	\centering
-	\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/graphpoint_diff_ne_pop_ddd_synth}
-		\caption{Non-Employers}
-	\end{subfigure}
-		\begin{subfigure}[b]{0.495\textwidth}
-		\includegraphics[width=\textwidth]{resources/graphpoint_diff_em_pop_ddd_synth}
-		\caption{Small businesses}
-	\end{subfigure}
-	\caption{Treatment Effect of triple difference model with synthetic control}
-	\label{fig:ddd}
-\end{figure}
+	\input{tmp/capital.tex}
+	\caption{Impact of health reform on low capital industries}
+	\label{tab:capital_ne}
+\end{table} 
 
-Table \ref{tab:capital_ne} summarizes our results for non-employers and Table \ref{tab:capital_em} summarizes our small business results. Our small business results do now show statistical significance. Our Model (4) difference and difference estimator for non-employers shows a significant drop in establishment creation rates for low capital enterprises over high capital enterprises. The estimate of Model (5) which accounts for non-Massachusetts specific shocks attenuates our results but does not remove the significance. To put our results in perspective, overall Massachusetts had on average an increase of 639 non-employer establishments per year per million people. We have 100 NAICS 4 digit industries represented in our dataset, so the average increase is on the order of 6 establishments per year per million people per industry. Our point estimate of -16 therefore suggests a large and meaningful impact on the number of low capital establishments relative to high capital establishments as a result of the health care shock for non-employers. The results from Model (6) and Model (7) indicate the large impact may have been a short term phenomenon for non-employers. 
+\begin{comment}
 
 \begin{table}[H]
 	\centering
 	\input{resources/main_diff_ne_pop.tex}
 	\caption{Impact of health reform on low capital industries}
-	\label{tab:capital_ne}
 \end{table}
+
+\end{comment}
+
+\begin{table}[H]
+	\centering
+	\input{tmp/capital_ext.tex}
+	\caption{Impact of health reform on low capital industries}
+	\label{tab:capital_em}
+\end{table} 
+
+\begin{comment}
 
 \begin{table}[H]
 	\centering
 	\input{resources/main_diff_em_pop.tex}
 	\caption{Impact of health reform on low capital industries}
-	\label{tab:capital_em}
 \end{table}
+
+\end{comment}
 
 \section{Conclusion}
 \label{sec:conclude}
