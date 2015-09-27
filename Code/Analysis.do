@@ -4429,7 +4429,7 @@ program define GenerateSynthetic
 
 				use $dir/tmp/synth, clear
 				
-				bysort stcode cntycd: keep if _n == 1
+				bysort panel: keep if _n == 1
 				ren panel _Co_Number
 				merge 1:1 _Co_Number using `filename'
 				keep if _merge == 3
