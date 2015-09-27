@@ -19,14 +19,14 @@
 
 \pagestyle{myheadings}
 \markright{\hfill TIES Second Year Paper \hfill}
-\title{Which Startups Need Healthcare?}
+\title{Does Access to Healthcare Matter for Entrepreneurship?}
 \author{Ankur Chavda}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-We study the effect of improved access to health insurance on entrepreneurial rates across industries. We use the 2006 reform of the Massachusetts health care market as our shock. In contrast to previous research, we use our shock to test which kinds of startups were more likely to be created rather than whether individuals became more likely to become entrepreneurs.  We find a statistically significant decrease in non-employer establishments for industries that require low levels of startup capital relative to industries requiring high levels of startup capital. Our results suggests low capital industries already have sufficient entrepreneurial activity and do not benefit from health care reforms as enacted in Massachusetts. 
+We study the effect of improved access to health insurance on entrepreneurial rates across industries. We use the 2006 reform of the Massachusetts health care market as our shock. In contrast to previous research, we use our shock to test which kinds of startups were more likely to be created in addition to whether individuals became more likely to become entrepreneurs.  We develop a theoretical model uses institutional heterogeneity to make predictions on how the reform should affect the distribution of entrepreneurs across industries. We see weak evidence in our data that those affects exists. Our results suggests entrepreneurship is constrained by factors other than access to health care and did not benefit from the reforms enacted in Massachusetts. 
 \end{abstract}
 
 
@@ -67,29 +67,26 @@ We are not aware of research asking the complementary question of what \emph{ent
 \end{quote}
 The above quote suggests we will see an effect in self-employed consultants but not in high growth startups. More generally, the impact of health care reform may vary by firm characteristics such as industry and not just by type of entrepreneur. We believe using heterogeneity in institutional characteristics of firms can broaden our understanding of the relationship between health care and entrepreneurship as well as explain some of the conflicting previous findings on entrepreneurs. 
 
-In this paper we contribute to the literature in two ways. We first present results that suggest the current ambiguity about the impact of health care on entrepreneurial rates may due to controls that imperfectly account for firm characteristics. We then use two characteristics of firms, tax status and capital requirements, to probe what kinds of firms are most effected by changes to health care. Our results suggest that while health care reform may provide marginal benefits to entrepreneurship, in general health care is not a strong policy lever to influence the level of entrepreneurship in an economy.
+In this paper we contribute to the literature in two ways. We first present results that suggest the current ambiguity about the impact of health care on entrepreneurial rates may due to controls that imperfectly account for regional differences. We then use two characteristics of firms, tax status and capital requirements, to probe what kinds of firms are most effected by changes to health care. Our results suggest that while health care reform may provide marginal benefits to entrepreneurship, in general health care is not a strong policy lever to influence the level of entrepreneurship in an economy.
 
 The rest of the article proceeds as follows. Section \ref{sec:review} provides an overview of the previous research done in this area. Section \ref{sec:reform} describes the Massachusetts health reform we use as a policy shock. Section \ref{sec:model} outlines a model that considers how the reform should heterogeneously affect entrepreneurship by industry. Section \ref{sec:data} describes the data sources we use in our analysis. Section \ref{sec:regression} explains our empirical approach. Section \ref{sec:results} presents the effects of the reform on entrepreneurship and Section \ref{sec:conclude} concludes. 
 
 \section{Literature Review}
 \label{sec:review}
 
-Uninsurance versus access to insurance
+Our paper builds upon five major streams of research: 1) general job lock, 2) the relationship between health care and entrepreneurship, 3) health reform's impact on health outcomes 4) tax policy's impact on firm entry and 5) capital constraints on entrepreneurship. 
 
-Previous research on whether access to health insurance affects entrepreneurial rates have produced mixed results. Holtz-Eakin et al.\footnote{HOLTZ-EASKIN} test this relationship using both variance in spousal insurance coverage and regulation requiring the ability to continue coverage after employment ends\footnote{Consolidated Omnibus Budget Reconciliation Act of 1985 (COBRA)}. They find no result and posit entrepreneurs would not be dissuaded by concerns over health insurance. More recently the Affordable Care Act of 2010 required health insurance plans to cover dependents up to the age of 26. Bailey uses this policy change to test whether improving access to health insurance increases entrepreneurial rates and finds no effect. 
+The basic premise that health insurance matters to an individual's employment decisions has been well established in the job lock literature. Gruber and Madrain 2001 provides an overview of the topic. An example of early work is a paper by Gruber and Madrain found that enabling employees to keep their current policy increases mobility between jobs\footnote{Gruber and Madrain}. More recently Garthaiwt \footnote{GW} et al show workers will stay employed in order to keep their private health insurance coverage using a policy change in Tennessee as a quasi-experimental shock. 
+
+Previous research on whether access to health insurance specifically affects the transition of workers to entrepreneurship has produced mixed results. Holtz-Eakin et al.\footnote{HOLTZ-EASKIN} test this relationship using both variance in spousal insurance coverage and regulation requiring the ability to continue coverage after employment ends\footnote{Consolidated Omnibus Budget Reconciliation Act of 1985 (COBRA)}. They find no result and posit entrepreneurs would not be dissuaded by concerns over health insurance. More recently the Affordable Care Act of 2010 required health insurance plans to cover dependents up to the age of 26. Bailey uses this policy change to test whether improving access to health insurance increases entrepreneurial rates and finds no effect. 
 
 In contrast, both Wellington \footnote{WELLINGTON} and Fairie et al \footnote{Fairie et all} provide evidence that having a spouse with insurance increases the propensity to become an entrepreneur. Fairie et al \footnote{Fairie et all} also exploit the Medicare cutoff at age 65 to suggest entrepreneurship increases at the discontinuity. Olds \footnote{Olds} targets entrepreneurs with children and finds providing health insurance to previously uninsured children increases self-employment rates in the household by 23\%. Heim and Lurie analyze tax filing data using the 2006 health care reform in Massachusetts as a shock which increased access to health insurance. They find a small decrease in the overall probability a taxpayer earns a majority of their income from self-employment which varied by age group. Becker and Tuzeman apply census data to the same shock to test the connection between insurance rates and self-employment rates. They estimate that a 1\% increase in health insurance rates generates a 0.06\% increase in the self-employment rate. 
-
-The more general job lock literature has been more consistent in showing that health
-care affects employment incentives. Early work by Gruber and Madrain found that enabling
-employees to keep their current policy increases mobility between jobs\footnote{Gruber and Madrain}. More recently Garthaiwt \footnote{GW} et al show workers will stay employed in order to keep their private health insurance coverage. 
-\begin{comment}
-Dhaval et al. show increased Medicare enrollment led to lower employment rates for pregnant women. 
-\end{comment}
 
 The source of variation used this paper, the Massachusetts reform of 2006, has been empirically shown to have affected health outcomes. Toussaint et al. \footnote{Toussaint} find uninsurance rates dropped in trauma centers. Miller uses both within state variation in insurance rates and the rest of New England as a control to suggest non-urgent ER visits dropped after the reform \footnote{Miller 2012}.  Summers, Long, and Baicker \footnote{Summers long baicker 2014} find mortality rates dropped as a result of the reform. 
 
 A number of studies have found a strong, negative relationship between between tax rates and the decision to become an entrepreneur. Early work by Gentry and Hubbard \footnote{Gentry Hubbard} called out a number of possible channels for the tax rates to influence entrepreneurship, including changes in the relative payoff of wages versus entrepreneurial returns and incorporation for the purpose of shifting income to corporate tax schedules. Gentry and Hubbard use US Census panel data to estimate how changes in effective marginal tax rates impact the propensity for an individual to become self-employed and find a significant effect. Overall their dataset has about 3\% of individuals entering self-employment over the panel time period; they estimate a 5\% increase in tax rates lowers the probably of self-employment to around 2.75\%. Cullen and Gordon \footnote{Cullen Gorden} build a theoretical model that enables them to identify various channels linking tax rates to entrepreneurship and use income tax data to find a large effect on risky businesses that incur losses early on. Da Rin \footnote{Da Rin} uses firm level panel data for Western Europe and finds drops in corporate tax rates increases firm entry. Djankov et al \footnote{Djankov} finds similar results with a global set of countries. 
+
+Finally, the capital constraints literature has explored how entrepreneurship rates by industry can vary by the capital requirements of each industry. 
 
 \begin{comment}
 
@@ -513,11 +510,13 @@ Table \ref{tab:nonprofit} shows our results testing Proposition 2 claim that non
 
 \end{comment}
 
-\subsection{Capital Requirement Heterogeneity}
+\subsection{Entrepreneurship Unconstrained by Health Care}
 
-Table \ref{tab:capital_ne} summarizes the results of testing Proposition 3 using our dataset of non-employing establishments. Column 1 uses the diff-in-diff estimator of equation 4 to show overall low capital industries grew slower than high capital industries after our shock. Column 2 
+Table \ref{tab:capital_ne} summarizes the results of testing Proposition 3 using our dataset of non-employing establishments. Column 1 uses the diff-in-diff estimator of equation 4 to show overall low capital industries grew slower than high capital industries after our shock. However as with our non-profit analysis, the result attenuates to be indistinguishable from zero once we apply our various control groups under the triple difference model of equation 5. 
 
- for non-employers and Table \ref{tab:capital_em} summarizes our small business results. Our small business results do now show statistical significance. Our Model (4) difference and difference estimator for non-employers shows a significant drop in establishment creation rates for low capital enterprises over high capital enterprises. The estimate of Model (5) which accounts for non-Massachusetts specific shocks attenuates our results but does not remove the significance. To put our results in perspective, overall Massachusetts had on average an increase of 639 non-employer establishments per year per million people. We have 100 NAICS 4 digit industries represented in our dataset, so the average increase is on the order of 6 establishments per year per million people per industry. Our point estimate of -16 therefore suggests a large and meaningful impact on the number of low capital establishments relative to high capital establishments as a result of the health care shock for non-employers. The results from Model (6) and Model (7) indicate the large impact may have been a short term phenomenon for non-employers. 
+There is more evidence that a stronger short run effect was present, as predicted by Proposition 4. Column 2 of table \ref{tab:capital_ne_ext} shows a significant effect under the triple diff model of equation 7 with other New England states as a control. The result is not robust to control as we see in Column 3 and Column 4. 
+
+Note that all of our point estimates across both tables are negative, regardless of significance. Our theory predicts this would be the case if opportunities for low capital firms were somehow constrained by other factors. In other words, our results suggest that the lack access to healthcare is not a major blocker for entrepreneurs to start firms. 
 
 \begin{table}[H]
 	\centering
@@ -540,7 +539,7 @@ Table \ref{tab:capital_ne} summarizes the results of testing Proposition 3 using
 	\centering
 	\input{tmp/capital_ext.tex}
 	\caption{Impact of health reform on low capital industries}
-	\label{tab:capital_em}
+	\label{tab:capital_ne_ext}
 \end{table} 
 
 \begin{comment}
@@ -579,6 +578,8 @@ However
 Long and Dahlen \footnote{Long Dahlen 2014} and Long, Stockly and Nordahl \footnote{2012} show insurance rates increased primarily among low income, childless adults. Not the demographic for entrepreneurs. 
 
 \end{comment}
+
+\newpage
 
 \appendix
 \section*{Appendix}
@@ -720,6 +721,8 @@ Calculating the kernel density over the entire range of Kickstarter goals provid
 We therefore omit projects with goals \$5,000,000 or greater from the density estimate; these projects are abnormally high relative to what is realistic on Kickstarter. They likely reflect aspirational goals that go beyond the true capital requirements of the inventor's idea. 
 
 \end{comment}
+
+\newpage
 
 \begin{thebibliography}{99}
 
