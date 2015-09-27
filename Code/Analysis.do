@@ -4429,7 +4429,7 @@ program define GenerateSynthetic
 
 				use $dir/tmp/synth, clear
 				
-				bysort stcode cntycd: keep if _n == 1
+				bysort panel: keep if _n == 1
 				ren panel _Co_Number
 				merge 1:1 _Co_Number using `filename'
 				keep if _merge == 3
@@ -4704,8 +4704,8 @@ program define Results_Nonprofit
 	* Standard regression compariable to previous work
 	eststo DD_NE_NE: xtreg `y_variable' treatment ib`base_year'.year c n s if state_ne == 25, fe robust
 	estadd local control "Within MA" 
-	eststo DDD_NE_NE: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if !missing(state_ne), fe robust
-	estadd local control "New England" 
+	* eststo DDD_NE_NE: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if !missing(state_ne), fe robust
+	* estadd local control "New England" 
 	
 	* using border counties	
 	merge n:1 stcode cntycd using $dir/tmp/border_counties
@@ -4713,27 +4713,26 @@ program define Results_Nonprofit
 	* drop if missing(border) | border == 0
 	eststo DD_NE_BO: xtreg `y_variable' treatment ib`base_year'.year c n s if state_bo == 25 & border == 1, fe robust
 	estadd local control "Within MA" 
-	eststo DDD_NE_BO: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1, fe robust
-	estadd local control "Border Counties" 
+	* eststo DDD_NE_BO: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1, fe robust
+	* estadd local control "Border Counties" 
 	drop border	
 
-	/*
-	
 	* GenerateSynthetic "`y_variable'"
 	CreateSynthetic 25 "`y_variable'" `base_year'
-	gen state_sy = stcode inlist(stcode, 0, 25)
+	gen state_sy = stcode if inlist(stcode, 0, 25)
 	egen county_sy = group(state_sy cntycd)
-	drop treatment
+	drop treatment treatment_ddd
 	gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
 	gen treatment_ddd = treatment
-	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s, fe robust
-	* eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county#ib`base_year'.year c_n, fe robust
+	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s if state_sy == 25, fe robust
+	estadd local control "Synth" 	
+	eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n, fe robust
+	estadd local control "Synth" 	
 	
 	* gen treatment_dd = (stcode == 25) & (year > `base_year')
 	* xtreg `y_variable' treatment_dd ib2007.year if stcode == 25, fe robust 	
-	*/
 	
-    esttab DD_NE_NE DDD_NE_NE DDD_NE_BO using $dir/tmp/nonprofit.tex, ///
+    esttab DD_NE_NE DD_NE_BO DD_NE_SY DDD_NE_SY using $dir/tmp/nonprofit.tex, ///
                 mtitles("(1)" "(2)" "(3)")   ///
                 varlabels(treatment "Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ Non-profit $\times$ Post 2007") ///
                 keep(treatment treatment_ddd)  ///
