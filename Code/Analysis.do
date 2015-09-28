@@ -4730,6 +4730,8 @@ program define Results_Nonprofit
 	
 	* gen treatment_dd = (stcode == 25) & (year > `base_year')
 	* xtreg `y_variable' treatment_dd ib2007.year if stcode == 25, fe robust 	
+
+	save $dir/tmp/results_nonprofit, replace	
 	
     esttab DD_NE_NE DDD_NE_NE DDD_NE_BO DDD_NE_SY using $dir/tmp/nonprofit.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
@@ -4772,8 +4774,8 @@ program define Results_Capital
 	gen low_capital = (percent_no_funding >= ((r(min) + r(max)) / 2))
 	
 	gen treatment = (stcode == 25) & (year > `base_year') & (low_capital == 1)
-    gen single_treat = (stcode == 25) & (year >= 2008) & (year <= 2010) & (low_capital == 1)
-    gen post_treat = (stcode == 25) & (year > 2010) & (low_capital == 1)
+    gen single_treat = (stcode == 25) & (year >= 2008) & (year <= 2009) & (low_capital == 1)
+    gen post_treat = (stcode == 25) & (year > 2009) & (low_capital == 1)
 	gen treatment_ddd = treatment
 	gen single_treat_ddd = single_treat
 	gen post_treat_ddd = post_treat
@@ -4791,6 +4793,18 @@ program define Results_Capital
 	drop if missing(low_capital)
 	
 	gen naics_fe = floor(naics / 100)
+
+	/*
+	preserve
+	levelsof year, local(years)
+	foreach year of local years {
+		if `year' == `base_year' | `year' == 2000 continue
+		gen iTYear`year' = (year == `year') & (stcode == 25) & (low_capital)
+	}
+	xtreg `y_variable' iTYear* i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	GraphPoint iTYear `base_year' "Non-Employers Capital DDD" "_capital_ne"
+	restore	
+	*/
 	
 	* Standard regression compariable to previous work
 	eststo DD_NE: xtreg `y_variable' treatment ib`base_year'.year c n s if state_ne == 25, fe robust
@@ -4806,18 +4820,6 @@ program define Results_Capital
 	test single_treat_ddd = post_treat_ddd
 	estadd scalar test = r(p)
 	estadd local control "New England" 
-
-	/*
-	preserve
-	levelsof year, local(years)
-	foreach year of local years {
-		if `year' == `base_year' | `year' == 2000 continue
-		gen iTYear`year' = (year == `year') & (stcode == 25) & (low_capital)
-	}
-	xtreg `y_variable' iTYear* i.naics_fe#ib`base_year'.year i.county#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
-	GraphPoint iTYear `base_year' "Non-Employers Capital DDD" "_capital"
-	restore	
-	*/
 	
 	* using border counties	
 	merge n:1 stcode cntycd using $dir/tmp/border_counties
@@ -4841,8 +4843,8 @@ program define Results_Capital
 	egen county_sy = group(state_sy cntycd)
 	drop treatment treatment_ddd single_treat post_treat single_treat_ddd post_treat_ddd
 	gen treatment = (stcode == 25) & (year > `base_year') & (low_capital == 1)
-    gen single_treat = (stcode == 25) & (year >= 2008) & (year <= 2010) & (low_capital == 1)
-    gen post_treat = (stcode == 25) & (year > 2010) & (low_capital == 1)
+    gen single_treat = (stcode == 25) & (year >= 2008) & (year <= 2009) & (low_capital == 1)
+    gen post_treat = (stcode == 25) & (year > 2009) & (low_capital == 1)
 	gen treatment_ddd = treatment
 	gen single_treat_ddd = single_treat
 	gen post_treat_ddd = post_treat	
@@ -4860,6 +4862,7 @@ program define Results_Capital
 	estadd scalar test = r(p)
 	estadd local control "Synth" 
 
+	/*
 	preserve
 	levelsof year, local(years)	
 	foreach year of local years {
@@ -4870,6 +4873,9 @@ program define Results_Capital
 	GraphPoint iTYear 2007 "`description'" "_`y_variable'_ddd_synth"
 	drop iTYear*
 	restore
+	*/
+	
+	save $dir/tmp/results_capital, replace
 	
     esttab DD_NE DDD_NE DDD_BO DDD_NE_SY using $dir/tmp/capital.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
@@ -4886,10 +4892,10 @@ program define Results_Capital
 
     esttab A_DD_NE A_DDD_NE A_DDD_BO A_DDD_NE_SY using $dir/tmp/capital_ext.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
-                varlabels(single_treat "Low Capital $\times$ 2008 to 2010" ///
+                varlabels(single_treat "Low Capital $\times$ 2008 to 2009" ///
 				post_treat "Low Capital $\times$ Post 2010" ///
-				single_treat_ddd "MA $\times$ Low Capital $\times$ 2008 to 2010" ///
-				post_treat_ddd "MA $\times$ Low Capital $\times$ Post 2010") ///
+				single_treat_ddd "MA $\times$ Low Capital $\times$ 2008 to 2009" ///
+				post_treat_ddd "MA $\times$ Low Capital $\times$ Post 2009") ///
                 keep(single_treat post_treat single_treat_ddd post_treat_ddd)  ///
                 indicate("County $\times$ Year FE = *.county_??#2008*" ///
                         "Industry $\times$ Year FE = *.naics_fe#2008*" ///
@@ -6984,4 +6990,4 @@ end
 //SummaryStats
 //SummaryStats_intraMA
 
-Results_Nonprofit
+Results_Capital
