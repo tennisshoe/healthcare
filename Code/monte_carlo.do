@@ -48,6 +48,37 @@ diff_se_pop with 3 lagged variables
 * with error_st = rho * error_s(t-1) + u_st and u_st ~ N(0,1)
 * error_sct defined similarly
 
+program define generateError
+
+	gen error = ERR_COUNTY[1 + floor(runiform() * rowsof(ERR_COUNTY)),1]
+	levelsof group, local(groups)
+	foreach group in `groups' {
+		levelsof year, local(years)
+		foreach year in `years' {
+			local state_error = 1 + floor(runiform() * rowsof(ERR_STATE))
+			replace error = error + ERR_STATE[`state_error',1] if group == `group' & year == `year'
+		}
+	} 
+
+end
+
+program define generateErrorLooseState
+
+	gen error = .
+	levelsof group, local(groups)
+	foreach group in `groups' {
+		local res_matrix = 1 + floor(runiform() * state_count)
+		replace error = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if group == `group'
+		* adding state error term by year
+		* levelsof year, local(years)
+		* foreach year in `years' {
+		* 	local state_row = 1 + floor(runiform() * rowsof(RES`res_matrix'))
+		* 	replace error = error + RES`res_matrix'[`state_row',1] if group == `group' & year == `year'
+		* }
+	} 
+
+end
+
 program define generateData
 
 	local group_count = 6
@@ -83,19 +114,7 @@ program define generateData
 	drop year_count
 
 	gen treatment = (group == 1 & year > (`year_count' / 2))
-
-	gen error = .
-	levelsof group, local(groups)
-	foreach group in `groups' {
-		local res_matrix = 1 + floor(runiform() * state_count)
-		replace error = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if group == `group'
-		* adding state error term by year
-		levelsof year, local(years)
-		foreach year in `years' {
-			local state_row = 1 + floor(runiform() * rowsof(RES`res_matrix'))
-			replace error = error + RES`res_matrix'[`state_row',1] if group == `group' & year == `year'
-		}
-	} 
+	generateError
 	
 	egen panel = group(group individual)
 	tsset panel year
@@ -339,6 +358,45 @@ end
 
 program define generateParameters
 
+	generateParametersLooseState
+	
+	levelsof state, local(states)
+	foreach state in `states' {
+		matrix dir
+		* first get means which are draws from state error
+		matrix U = J(rowsof(RES`state'),1,1)
+		matrix sum = U'*RES`state'
+		matrix mean = sum / rowsof(RES`state')
+		capture: matrix list ERR_STATE			
+		if _rc == 111 {
+			matrix ERR_STATE = mean'
+		}
+		else {
+			matrix ERR_STATE = ERR_STATE\mean'
+		}
+		matrix demean = vec(RES`state' - U*mean)
+		if _rc == 111 {
+			matrix ERR_COUNTY = demean
+		}
+		else {
+			matrix ERR_COUNTY = ERR_COUNTY\demean
+		}		
+		matrix drop U sum mean RES`state' demean
+	}
+
+	foreach matrix in ERR_COUNTY ERR_STATE {
+		clear
+		svmat `matrix'
+		matrix drop `matrix'
+		su `matrix'
+		gen err = (`matrix' - r(mean))/r(sd)
+		mkmat err, matrix(`matrix')
+	}
+	
+end
+
+program define generateParametersLooseState
+
 	scalar drop _all
 	matrix drop _all
 	use "$dir/tmp/Employment.dta", clear
@@ -398,8 +456,6 @@ program define generateParameters
 		}
 	}
 	
-	clear
-
 end
 
 program define generateParametersOld
