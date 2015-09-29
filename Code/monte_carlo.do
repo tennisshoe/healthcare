@@ -5,13 +5,14 @@ set more off, perm
 set emptycells drop
 global dir "~/Healthcare"
 if "$S_OS" == "Windows" { 
-	global dir "z:\Healthcare" 
+	* global dir "z:\Healthcare" 
+	global dir "C:\Users\Ankur\SkyDrive\Research\Healthcare" 
 }
 
 global groups 2
 global individuals 100
 global years 13
-global reps 200
+global reps 20
 
 local logfile = "$dir/tmp/mc_main_$groups" + "_$individuals" + "_$reps.log"
 log close _all
@@ -88,7 +89,13 @@ program define generateData
 	foreach group in `groups' {
 		local res_matrix = 1 + floor(runiform() * state_count)
 		replace error = RES`res_matrix'[1 + floor(runiform() * rowsof(RES`res_matrix')),1] if group == `group'
-	}
+		* adding state error term by year
+		levelsof year, local(years)
+		foreach year in `years' {
+			local state_row = 1 + floor(runiform() * rowsof(RES`res_matrix'))
+			replace error = error + RES`res_matrix'[`state_row',1] if group == `group' & year == `year'
+		}
+	} 
 	
 	egen panel = group(group individual)
 	tsset panel year
