@@ -358,7 +358,64 @@ end
 
 program define generateParameters
 
-	generateParametersLooseState
+	scalar drop _all
+	matrix drop _all
+	use "$dir/tmp/Employment.dta", clear
+	keep stcode cntycd year self_employed
+	drop if year == 2013
+	
+	merge n:1 stcode cntycd year using "$dir/tmp/Population.dta"
+	* ignoring counties in Virgina and Florida that don't show up here
+	* https://www.census.gov/geo/reference/codes/cou.html
+	count if _merge == 1 & stcode == 25
+	assert(r(N)==0)
+	keep if _merge == 3
+	drop _merge					
+	* for better readability dividing population by one million
+	replace population = population / 1000000
+
+	keep if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	scalar state_count = 6
+
+	egen state = group(stcode)
+	drop stcode
+	
+	egen panel =  group(state cntycd)
+	tsset panel year
+	
+	sort panel year	
+	gen se_pop = self_employed / population
+	gen diff_se_pop = D.se_pop
+	
+	levelsof panel, local(panels)
+	foreach panel in `panels' {
+		regress diff_se_pop L.diff_se_pop if panel == `panel'
+		local rho = _b[L.diff_se_pop]
+		* predict res if panel == `panel', rstand
+		predict res if panel == `panel', residuals
+		replace res = res / (1-`rho')
+		mkmat res, nomissing
+		drop res
+		
+		su state if panel == `panel'
+		local state = r(mean)
+		capture: matrix list RES`state'			
+		if _rc == 111 {
+			matrix RES`state' = res'
+		}
+		else {
+			matrix RES`state' = RES`state'\res'
+		}
+		matrix drop res
+
+		capture: matrix list RHO			
+		if _rc == 111 {
+			matrix RHO = (`rho')
+		}
+		else {
+			matrix RHO = RHO\(`rho')			
+		}
+	}
 	
 	levelsof state, local(states)
 	foreach state in `states' {
@@ -375,16 +432,24 @@ program define generateParameters
 			matrix ERR_STATE = ERR_STATE\mean'
 		}
 		matrix demean = vec(RES`state' - U*mean)
+		capture: matrix list ERR_COUNTY			
 		if _rc == 111 {
 			matrix ERR_COUNTY = demean
 		}
 		else {
 			matrix ERR_COUNTY = ERR_COUNTY\demean
-		}		
+		}
+		capture: matrix list ERR_FULL		
+		if _rc == 111 {
+			matrix ERR_FULL = vec(RES`state')
+		}
+		else {
+			matrix ERR_FULL = ERR_FULL\vec(RES`state')
+		}	
 		matrix drop U sum mean RES`state' demean
 	}
 
-	foreach matrix in ERR_COUNTY ERR_STATE {
+	foreach matrix in ERR_COUNTY ERR_STATE ERR_FULL {
 		clear
 		svmat `matrix'
 		matrix drop `matrix'
@@ -392,6 +457,8 @@ program define generateParameters
 		gen err = (`matrix' - r(mean))/r(sd)
 		mkmat err, matrix(`matrix')
 	}
+	
+	clear
 	
 end
 
@@ -455,6 +522,8 @@ program define generateParametersLooseState
 			matrix RHO = RHO\(`rho')			
 		}
 	}
+	
+	clear
 	
 end
 
