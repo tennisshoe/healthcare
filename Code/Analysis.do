@@ -4671,8 +4671,9 @@ program define Results_Nonprofit
 	drop if missing(percent_nonprofit)
 	gen nonprofit = percent_nonprofit >= .5
 	tab naics nonprofit
-	drop percent_nonprofit naicsdisplaylabel	
-	gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
+	* drop percent_nonprofit naicsdisplaylabel	
+	* gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
+	gen treatment = (stcode == 25) * (year > `base_year') * percent_nonprofit
 	gen treatment_ddd = treatment
 	
 	gen c_n = 0
@@ -4721,7 +4722,8 @@ program define Results_Nonprofit
 	gen state_sy = stcode if inlist(stcode, 0, 25)
 	egen county_sy = group(state_sy cntycd)
 	drop treatment treatment_ddd
-	gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
+	* gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
+	gen treatment = (stcode == 25) * (year > `base_year') * percent_nonprofit
 	gen treatment_ddd = treatment
 	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s if state_sy == 25, fe robust
 	estadd local control "Synth" 	
@@ -4733,9 +4735,10 @@ program define Results_Nonprofit
 
 	save $dir/tmp/results_nonprofit, replace	
 	
+*                 varlabels(treatment "Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ Non-profit $\times$ Post 2007") ///
     esttab DD_NE_NE DDD_NE_NE DDD_NE_BO DDD_NE_SY using $dir/tmp/nonprofit.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
-                varlabels(treatment "Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ Non-profit $\times$ Post 2007") ///
+                 varlabels(treatment "\% Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ \% Non-profit $\times$ Post 2007") ///
                 keep(treatment treatment_ddd)  ///
                 indicate("County $\times$ Year FE = *.county_??#2008*" ///
                         "Industry $\times$ Year FE = *.naics_fe#2008*" ///
@@ -4771,11 +4774,18 @@ program define Results_Capital
 	ren naics_4 naics
 
 	su percent_no_funding
+	* The datasets have percentages from 0 to 100 rather than on 0 1 interval
+	* if r(mean) > 1 {
+	*	replace percent_no_funding = percent_no_funding / 100
+	* }
 	gen low_capital = (percent_no_funding >= ((r(min) + r(max)) / 2))
 	
 	gen treatment = (stcode == 25) & (year > `base_year') & (low_capital == 1)
     gen single_treat = (stcode == 25) & (year >= 2008) & (year <= 2009) & (low_capital == 1)
     gen post_treat = (stcode == 25) & (year > 2009) & (low_capital == 1)
+	* gen treatment = (stcode == 25) * (year > `base_year') * percent_no_funding
+    * gen single_treat = (stcode == 25) * (year >= 2008) * (year <= 2009) * percent_no_funding
+    * gen post_treat = (stcode == 25) * (year > 2009) * percent_no_funding
 	gen treatment_ddd = treatment
 	gen single_treat_ddd = single_treat
 	gen post_treat_ddd = post_treat
@@ -4794,17 +4804,16 @@ program define Results_Capital
 	
 	gen naics_fe = floor(naics / 100)
 
-	/*
 	preserve
 	levelsof year, local(years)
 	foreach year of local years {
 		if `year' == `base_year' | `year' == 2000 continue
-		gen iTYear`year' = (year == `year') & (stcode == 25) & (low_capital)
+		gen iTYear`year' = (year == `year') & (stcode == 25) & (low_capital == 1)
+		* gen iTYear`year' = (year == `year') * (stcode == 25) * percent_no_funding
 	}
 	xtreg `y_variable' iTYear* i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
-	GraphPoint iTYear `base_year' "Non-Employers Capital DDD" "_capital_ne"
+	GraphPoint iTYear `base_year' "Non-Employers Capital Triple Differences" "_capital_ne"
 	restore	
-	*/
 	
 	* Standard regression compariable to previous work
 	eststo DD_NE: xtreg `y_variable' treatment ib`base_year'.year c n s if state_ne == 25, fe robust
@@ -4845,17 +4854,28 @@ program define Results_Capital
 	gen treatment = (stcode == 25) & (year > `base_year') & (low_capital == 1)
     gen single_treat = (stcode == 25) & (year >= 2008) & (year <= 2009) & (low_capital == 1)
     gen post_treat = (stcode == 25) & (year > 2009) & (low_capital == 1)
+	* gen treatment = (stcode == 25) * (year > `base_year') * percent_no_funding
+    * gen single_treat = (stcode == 25) *(year >= 2008) * (year <= 2009) * percent_no_funding
+    * gen post_treat = (stcode == 25) * (year > 2009) * percent_no_funding
 	gen treatment_ddd = treatment
 	gen single_treat_ddd = single_treat
 	gen post_treat_ddd = post_treat	
 
+	* trying to get f-test to work by dropping cells with low number of observations
+	* bysort naics: egen t = total(year == 2008)
+	* 6 means we just have 3 counties each control and treatment group 
+	* drop if t <= 16
+	* bysort county: egen t = total(year == 2008)
+	* drop if t <= 24
+	
+	
 	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s if state_sy == 25, fe robust
 	estadd local control "Synth"    
 	eststo A_DD_NE_SY: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_sy == 25, fe robust
 	test single_treat = post_treat
 	estadd scalar test = r(p)
 	estadd local control "Synth"    
-	eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if inlist(state_sy, 0, 25), fe robust
+	eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if inlist(state_sy, 0, 25), fe robust vsquish
 	estadd local control "Synth" 
 	eststo A_DDD_NE_SY: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if inlist(state_sy, 0, 25), fe robust
 	test single_treat = post_treat
@@ -4877,6 +4897,7 @@ program define Results_Capital
 	
 	save $dir/tmp/results_capital, replace
 	
+   *   varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
     esttab DD_NE DDD_NE DDD_BO DDD_NE_SY using $dir/tmp/capital.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
                 varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
@@ -4890,7 +4911,9 @@ program define Results_Capital
                         "Industry FE = n") ///
                 nonumbers replace compress se r2 scalar("control Control")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
 
-    esttab A_DD_NE A_DDD_NE A_DDD_BO A_DDD_NE_SY using $dir/tmp/capital_ext.tex, ///
+	* post_treat "\% Low Capital $\times$ Post 2010" ///
+
+	esttab A_DD_NE A_DDD_NE A_DDD_BO A_DDD_NE_SY using $dir/tmp/capital_ext.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
                 varlabels(single_treat "Low Capital $\times$ 2008 to 2009" ///
 				post_treat "Low Capital $\times$ Post 2010" ///
@@ -6990,4 +7013,4 @@ end
 //SummaryStats
 //SummaryStats_intraMA
 
-Results_Capital
+//Results_Capital
