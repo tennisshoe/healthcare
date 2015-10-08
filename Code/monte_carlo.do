@@ -987,4 +987,141 @@ program define runTest
 
 end
 
-runSimulation $reps
+program define deconvolutionTest
+
+	clear
+	local N = 101
+	local k = (`N' - 1) /2
+	local I = `N' + 2 * `k'
+	set obs `N'
+	gen rs = rnormal(0,2)
+	gen s = rnormal(3,1)
+
+	local min = 0
+	local max = 0
+	su rs
+	if(r(min) < `min') {
+		local min = r(min)
+	}
+	if(r(max) > `max') {
+		local max = r(max)
+	}
+
+	su s
+	if(r(min) < `min') {
+		local min = r(min)
+	}
+	if(r(max) > `max') {
+		local max = r(max)
+	}
+	
+	local max = 1 + floor(`max')
+	local min = floor(`min')
+	local delta = (`max' - `min') / `N'
+	local to = `N' + `k'
+	egen t = seq(), from(0) to(`N')
+	replace t = . if _n > `N'
+	replace t = t * `delta'
+	replace t = t + `min'
+	kdensity rs, generate(rs_t rs_f) at(t)
+	kdensity s, generate(s_t s_f) at(t)
+	drop rs_t s_t
+	set obs `I'
+	local to = `N' + 2 * `k'
+	egen i = seq(), from(0) to(`to')	
+
+	mata
+		mata clear
+		st_view(rs=.,.,"rs_f",0)
+		st_view(s=.,.,"s_f",0)
+		
+		con = convolve(rs,s)
+		con = (sum(rs) + sum(s))/2 / sum(con) * con
+		st_addvar("float", "con_f")
+		st_store(.,"con_f", con)				
+	end
+	
+	
+	line rs_f t || line s_f t || line con_f t
+	
+end
+
+program define deconvolution
+
+	clear
+	
+	local min = 0
+	local max = 0
+	svmat ERR_FULL
+	su ERR_FULL1
+	if(r(min) < `min') {
+		local min = r(min)
+	}
+	if(r(max) > `max') {
+		local max = r(max)
+	}
+
+	svmat ERR_STATE
+	su ERR_STATE1
+	if(r(min) < `min') {
+		local min = r(min)
+	}
+	if(r(max) > `max') {
+		local max = r(max)
+	}
+	
+	local N = 1024
+	capture noisily: set obs `N'	
+	local max = 1 + floor(`max')
+	local min = floor(`min')
+	local delta = (`max' - `min') / `N'
+	egen t = seq(), from(0) to(`N')
+	replace t = . if _n > `N'
+	replace t = t * `delta'
+	replace t = t + `min'
+
+	kdensity ERR_FULL, generate(rs_t rs_f) at(t)
+	kdensity ERR_STATE, generate(s_t s_f) at(t)
+	drop rs_t s_t
+	
+	mata
+		rs = st_data(.,"rs_f")
+		s = st_data(.,"s_f")
+		RS = fft(rs)
+		S = fft(s)
+		R=RS :/ S
+		r=invfft(R)
+		st_addvar("float", "r_f")
+		st_store(.,"r_f", r)
+		
+		rs_inv = invfft(RS)
+		st_addvar("float", "rs_inv")
+		st_store(.,"rs_inv", rs_inv)
+		
+	end
+	
+	local draws = 500
+	capture noisily: set obs `draws'	
+
+	sort t
+	foreach var in rs s r {
+		gen `var'_F = `var'_f[1]
+		replace `var'_F = `var'_f[_n] + `var'_F[_n-1] if _n > 1
+		su `var'_F
+		replace `var'_F = `var'_F / r(max)
+
+		gen `var'_draw = runiform() if _n <= `draws'
+		local i = 1
+		while `i' <= `draws' {
+			gen above = _n if `var'_F >= `var'_draw[`i']
+			su above
+			replace `var'_draw = t[r(min)] if _n == `i'
+			drop above
+			local i = `i' + 1
+		}
+	}
+	
+
+end
+
+//runSimulation $reps
