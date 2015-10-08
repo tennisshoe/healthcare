@@ -4073,6 +4073,7 @@ program define FrontPaperOutput
 	keep if stcode == 25
 	bysort year: egen total_ne = total(ne_est)
 	bysort year: keep if _n == 1	
+	outsheet total_ne year using $dir/tmp/construction.csv, comma replace
 	
 	graph twoway ///
 		(scatter total_ne year, msymbol(+)) ///
@@ -4552,7 +4553,20 @@ program define Results_Control
 			gen iTYear`year' = (year == `year') & (stcode == 25)
 		}
 		xtreg `y_variable' ib`base_year'.year iTYear* [pw=pweight] if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust	
+		matrix beta = e(b)'
+		matrix beta = beta[13..23,1]
 		GraphPoint iTYear `base_year' "Self-Employed in Massachusetts versus New England" "_`y_variable'_new_england"
+		keep year
+		bysort year: keep if _n == 1
+		drop if year == `base_year'
+		svmat beta
+		matrix drop beta
+		ren beta1 beta
+		set obs 12
+		replace year = 2007 if missing(year)
+		replace beta = 0 if missing(beta)
+		sort year
+		outsheet year beta using $dir/tmp/point_ne_new_england.csv, comma replace		
 		restore
 		
 		* using border counties	
@@ -4583,7 +4597,20 @@ program define Results_Control
 			gen iTYear`year' = (year == `year') & (stcode == 25)
 		}
 		xtreg `y_variable' ib`base_year'.year iTYear* [pw=pweight] if inlist(stcode, 0, 25), fe robust
+		matrix beta = e(b)'
+		matrix beta = beta[13..23,1]
 		GraphPoint iTYear `base_year' "Self-Employed in Massachusetts versus Synthetic" "_`y_variable'_synthetic"
+		keep year
+		bysort year: keep if _n == 1
+		drop if year == `base_year'
+		svmat beta
+		matrix drop beta
+		ren beta1 beta
+		set obs 12
+		replace year = 2007 if missing(year)
+		replace beta = 0 if missing(beta)
+		sort year
+		outsheet year beta using $dir/tmp/point_ne_synth.csv, comma	replace
 		restore
 				
 		drop if stcode == 0
@@ -4802,7 +4829,9 @@ program define Results_Capital
 	egen county_bo = group(state_bo cntycd)
 	drop if missing(low_capital)
 	
-	gen naics_fe = floor(naics / 100)
+	* gen naics_fe = floor(naics / 100)
+	gen naics_fe = naics
+	log using $dir/tmp/resultsCapital.log
 
 	preserve
 	levelsof year, local(years)
@@ -4861,14 +4890,17 @@ program define Results_Capital
 	gen single_treat_ddd = single_treat
 	gen post_treat_ddd = post_treat	
 
-	* trying to get f-test to work by dropping cells with low number of observations
+	* As robustness check can get f-test to work by dropping cells with low number of observations
+	* Need north of 132 = 11 * 12 items per panel on each dimention
+	* Verified this does not alter point estimates by much nor loose significance of results
+	* for all the DDD regressions run
 	* bysort naics: egen t = total(year == 2008)
-	* 6 means we just have 3 counties each control and treatment group 
-	* drop if t <= 16
-	* bysort county: egen t = total(year == 2008)
-	* drop if t <= 24
-	
-	
+	* drop if t < 12
+	* drop t
+	* bysort county_sy: egen t = total(year == 2008)
+	* drop if t < 12
+	* drop t
+
 	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s if state_sy == 25, fe robust
 	estadd local control "Synth"    
 	eststo A_DD_NE_SY: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_sy == 25, fe robust
@@ -4898,7 +4930,8 @@ program define Results_Capital
 	save $dir/tmp/results_capital, replace
 	
    *   varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
-    esttab DD_NE DDD_NE DDD_BO DDD_NE_SY using $dir/tmp/capital.tex, ///
+
+   esttab DD_NE DDD_NE DDD_BO DDD_NE_SY using $dir/tmp/capital.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
                 varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
                 keep(treatment treatment_ddd)  ///
