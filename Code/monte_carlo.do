@@ -144,7 +144,7 @@ program define generateData
 	* not using state residual since my parameter process only outputs a single residual
 	gen y = group - `mean_group' + panel - `mean_panel' + year - `mean_year' + residual	
 	su y
-	gen y_treated = y + r(sd) / 3 * treatment
+	gen y_treated = y + r(sd) / 20 * treatment
 	drop error residual rho
 	
 end
@@ -449,12 +449,20 @@ program define generateParameters
 		matrix drop U sum mean RES`state' demean
 	}
 
+	svmat ERR_FULL
+	su ERR_FULL
+	local sd = r(sd)
+	drop ERR_FULL
+	
+	* as a santiy check we should see that var_full = var_state + var_county
 	foreach matrix in ERR_COUNTY ERR_STATE ERR_FULL {
 		clear
 		svmat `matrix'
 		matrix drop `matrix'
 		su `matrix'
-		gen err = (`matrix' - r(mean))/r(sd)
+		* gen err = (`matrix' - r(mean))/r(sd)
+		gen err = (`matrix' - r(mean)) / `sd'
+		su err
 		mkmat err, matrix(`matrix')
 	}
 	
@@ -987,19 +995,20 @@ program define runTest
 
 end
 
+* can only get this to work for mean zero distributions
 program define deconvolutionTest
 
 	clear
-	local N = 101
+	local N = 5001
 	local k = (`N' - 1) /2
 	local I = `N' + 2 * `k'
 	set obs `N'
-	gen rs = rnormal(0,2)
-	gen s = rnormal(3,1)
+	gen r = rnormal(0,3)
+	gen s = rnormal(0,4)
 
 	local min = 0
 	local max = 0
-	su rs
+	su r
 	if(r(min) < `min') {
 		local min = r(min)
 	}
@@ -1017,32 +1026,70 @@ program define deconvolutionTest
 	
 	local max = 1 + floor(`max')
 	local min = floor(`min')
-	local delta = (`max' - `min') / `N'
+	local delta = (`max' - `min') / (`N' - 1)
 	local to = `N' + `k'
 	egen t = seq(), from(0) to(`N')
 	replace t = . if _n > `N'
 	replace t = t * `delta'
 	replace t = t + `min'
-	kdensity rs, generate(rs_t rs_f) at(t)
+	kdensity r, generate(r_t r_f) at(t)
 	kdensity s, generate(s_t s_f) at(t)
-	drop rs_t s_t
+	drop r_t s_t
+	drop t
 	set obs `I'
 	local to = `N' + 2 * `k'
-	egen i = seq(), from(0) to(`to')	
+	egen t = seq(), from(0) to(`to')	
 
-	mata
-		mata clear
-		st_view(rs=.,.,"rs_f",0)
-		st_view(s=.,.,"s_f",0)
-		
-		con = convolve(rs,s)
-		con = (sum(rs) + sum(s))/2 / sum(con) * con
-		st_addvar("float", "con_f")
-		st_store(.,"con_f", con)				
-	end
+	replace t = . if _n > `I'
+	* not intuitive but see viewsource ftretime.mata for why
+	replace t = t - `k'
+	replace t = t * `delta'
+	replace t = t + `min'
 	
+	mata: mata clear
+	mata: st_view(r=.,.,"r_f",0)
+	mata: st_view(s=.,.,"s_f",0)		
+	mata: con = convolve(r*`delta',s*`delta') / `delta'
+	* transform so pdf has total mass of 1; think stata's fft function
+	* doesn't scale transform correctly for use in probabilty spaces
+	mata: st_addvar("float", "con_f")
+	mata: st_store(.,"con_f", con)		
+
+	foreach var in r_f s_f{
+		gen temp = `var'[_n - `k'] if _n > `k'
+		drop `var'
+		ren temp `var'
+	}
+
+	* gen temp = con_f[_n - `k'/2] if _n > `k' /2
+	* drop con_f
+	* ren temp con_f	
+	gen rs = rnormal(0,5)
+	kdensity rs, generate(rs_t rs_f) at(t)	
 	
-	line rs_f t || line s_f t || line con_f t
+	line r_f t || line s_f t || line con_f t || line rs_f t
+	
+	* now try deconconvolution
+	mata: mata clear
+	mata: st_view(r=.,.,"r_f",0)
+	mata: st_view(rs=.,.,"rs_f",0)
+	mata: decon = deconvolve(r*`delta',rs*`delta') / `delta'
+	* transform so pdf has total mass of 1; think stata's fft function
+	* doesn't scale transform correctly for use in probabilty spaces
+	mata: decon = J(1,`k',0) , decon , J(1,`k',0)
+	mata: st_addvar("float", "decon_f")
+	mata: st_store(.,"decon_f", decon')		
+	mata: st_view(s=.,.,"s_f",0)		
+	mata: s_calc = deconvolve(r,convolve(r,s))
+	mata: st_addvar("float", "s_calc_f")
+	mata: s_calc = J(1,`k',0) , s_calc , J(1,`k',0)
+	mata: st_store(.,"s_calc_f", s_calc')		
+	
+	replace s_calc_f = s_calc_f + 0.005
+
+	line r_f t || line s_f t || line decon_f t || line rs_f t
+	line r_f t || line s_f t || line s_calc_f t || line rs_f t
+
 	
 end
 
@@ -1084,22 +1131,18 @@ program define deconvolution
 	kdensity ERR_STATE, generate(s_t s_f) at(t)
 	drop rs_t s_t
 	
-	mata
-		rs = st_data(.,"rs_f")
-		s = st_data(.,"s_f")
-		RS = fft(rs)
-		S = fft(s)
-		R=RS :/ S
-		r=invfft(R)
-		st_addvar("float", "r_f")
-		st_store(.,"r_f", r)
+	mata: rs = st_data(.,"rs_f")
+	mata: s = st_data(.,"s_f")
+	mata: RS = fft(rs)
+	mata: S = fft(s)
+	mata: R=RS :/ S
+	mata: r=invfft(R)
+	mata: st_addvar("float", "r_f")
+	mata: st_store(.,"r_f", r)
+	mata: rs_inv = invfft(RS)
+	mata: st_addvar("float", "rs_inv")
+	mata: st_store(.,"rs_inv", rs_inv)
 		
-		rs_inv = invfft(RS)
-		st_addvar("float", "rs_inv")
-		st_store(.,"rs_inv", rs_inv)
-		
-	end
-	
 	local draws = 500
 	capture noisily: set obs `draws'	
 
@@ -1124,4 +1167,19 @@ program define deconvolution
 
 end
 
-//runSimulation $reps
+program define exportData
+
+	generateParameters
+	svmat ERR_STATE
+	svmat ERR_FULL
+	ren ERR_STATE state
+	ren ERR_FULL full
+	outsheet state using $dir/tmp/matlabInputState.csv, comma replace
+	outsheet full using $dir/tmp/matlabInputFull.csv, comma replace
+	clear
+
+end
+
+//exportData
+//deconvolutionTest
+runSimulation $reps
