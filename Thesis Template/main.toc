@@ -1,0 +1,21 @@
+\contentsline {chapter}{\numberline {1}Introduction}{13}
+\contentsline {chapter}{\numberline {2}Literature Review}{17}
+\contentsline {chapter}{\numberline {3}Reform in Massachusetts}{21}
+\contentsline {chapter}{\numberline {4}Theoretical Motivation}{25}
+\contentsline {section}{\numberline {4.1}Aggregate Effect}{25}
+\contentsline {section}{\numberline {4.2}Tax Heterogeneity}{26}
+\contentsline {section}{\numberline {4.3}Capital Heterogeneity}{26}
+\contentsline {chapter}{\numberline {5}Data Sources}{29}
+\contentsline {chapter}{\numberline {6}Empirical Approach}{33}
+\contentsline {section}{\numberline {6.1}Overall Impact}{33}
+\contentsline {section}{\numberline {6.2}Non-profit Heterogeneity}{35}
+\contentsline {section}{\numberline {6.3}Capital Requirement Heterogeneity}{36}
+\contentsline {section}{\numberline {6.4}Inference}{37}
+\contentsline {chapter}{\numberline {7}Findings}{39}
+\contentsline {section}{\numberline {7.1}Importance of Control Group}{39}
+\contentsline {section}{\numberline {7.2}Long Run Tax Impact}{40}
+\contentsline {section}{\numberline {7.3}Entrepreneurship Unconstrained by Health Care}{41}
+\contentsline {chapter}{\numberline {8}Conclusion}{43}
+\contentsline {chapter}{\numberline {A}Formal Theory Derivations}{45}
+\contentsline {chapter}{\numberline {B}Small Group Covariance}{51}
+\contentsline {chapter}{\numberline {C}Monte-Carlo Simulation}{53}

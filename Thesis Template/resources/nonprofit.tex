@@ -1,0 +1,37 @@
+{
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{4}{c}}
+\hline\hline
+          &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}&\multicolumn{1}{c}{(3)}&\multicolumn{1}{c}{(4)}\\
+\hline
+\% Non-profit $\times$ Post 2007&   42.565***&            &            &            \\
+          &  (9.203)   &            &            &            \\
+MA $\times$ \% Non-profit $\times$ Post 2007&            &   52.015***&   20.728   &   52.550***\\
+          &            & (14.387)   & (18.712)   & (12.941)   \\
+County $\times$ Year FE &       No   &      Yes   &      Yes   &      Yes   \\
+Industry $\times$ Year FE &       No   &      Yes   &      Yes   &      Yes   \\
+County $\times$ Industry FE &       No   &      Yes   &      Yes   &      Yes   \\
+Year FE   &      Yes   &       No   &       No   &       No   \\
+County FE &      Yes   &       No   &       No   &       No   \\
+State FE  &      Yes   &       No   &       No   &       No   \\
+Industry FE &      Yes   &       No   &       No   &       No   \\
+\hline
+\(N\)     &     3288   &    10560   &     4236   &     6384   \\
+\(R^{2}\) &    0.019   &    0.143   &    0.121   &    0.131   \\
+Control   &Within MA   &New England   &Border Counties   &    Synth   \\
+\hline\hline
+\multicolumn{5}{l}{\footnotesize Standard errors in parentheses}\\
+\multicolumn{5}{l}{\footnotesize * p<0.10, ** p<0.05, *** p<0.01}\\
+\multicolumn{5}{l}{\footnotesize Column (1) is a diff-in-diff model of non-employers per million people in Massachusetts from  }\\ 
+\multicolumn{5}{l}{\footnotesize \space 2000 to 2012 with treatment after 2007 and treatment intensity equal to percentage of non-profit}\\ 
+\multicolumn{5}{l}{\footnotesize \space firms within industry.}\\ 
+\multicolumn{5}{l}{\footnotesize Non-profit industries defined by 4 digit NAICS codes where over half of firms were tax-exempt }\\
+\multicolumn{5}{l}{\footnotesize  \space according to 2007 Economic Census data.}\\
+\multicolumn{5}{l}{\footnotesize Maine, Connecticut, Vermont, Rhode Island and New Hampshire used as controls in column (2) }\\
+\multicolumn{5}{l}{\footnotesize \space under triple diff model. }\\
+\multicolumn{5}{l}{\footnotesize Column (3) restricts the dataset to counties that border other states across Massachusetts, }\\
+\multicolumn{5}{l}{\footnotesize \space Connecticut, Vermont, Rhode Island, New Hampshire and New York. }\\
+\multicolumn{5}{l}{\footnotesize Column (4) uses a synthetic control model that matches each Massachuetts industry by county }\\
+\multicolumn{5}{l}{\footnotesize \space pre-trend against US counties with similar income, age, urban and insurance rate characteristics. }\\
+\end{tabular}
+}

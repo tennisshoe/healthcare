@@ -1,0 +1,52 @@
+\chapter{Small Group Covariance}
+Suppose we have $N$ individuals $i$ spread across $M$ groups $g$. Linear regression of observed outcomes $Y_i$ against a vector of independent variables $X_i$ solves a system of equations for $\beta$. 
+$$ \hat{\beta} = \underset{\beta}{\arg \min} \; \sum_{i=1}^{N} (Y_i - X_i' \beta)^2 \implies \sum_{g=1}^{M} \sum_{i \in g} X_i(Y_i - X_i' \hat{\beta}) = 0$$
+
+In addition, suppose we have a treatment indicator variable $X_i^t$ with a corresponding coefficient $\beta^t$ and the treatment is one for just a single group $g^t$. We can rewrite the system of equations and note the sum of its residuals for the group $g^t$ equals zero by construction. 
+\begin{align*}
+& \sum_{g=1}^{M} \sum_{i \in g} \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) = \\  & \; \sum_{g\ne g^t}^{M} \sum_{i \in g} \begin{bmatrix}
+X_i^{-t} \\  0 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  0 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) + \sum_{i \in g^t} \begin{bmatrix}
+X_i^{-t} \\  1 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  1 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) = 0 \\
+& \implies \sum_{i \in g^t} (1) 
+(Y_i - \begin{bmatrix}
+X_i^{-t} \\  1 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix}) = 0
+\end{align*}
+
+The covariance matrix for clustered standard errors take the form:
+$$ \hat{V} \propto (X'X)^{-1} \left( \sum_{g=1}^{M} \sum_{i \in g} \left(\begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix})\right)' \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}(Y_i - \begin{bmatrix}
+X_i^{-t} \\  X_i^t 
+\end{bmatrix}' \begin{bmatrix}
+\hat{\beta}^{-t} \\ \hat{\beta}^t 
+\end{bmatrix})  \right)  (X'X)^{-1}$$ 
+
+We observe that in the inner summation when $g \ne g^t$ we are adding matrices with zero's in the last column and row since $X^t_i$ will be zero. When $g = g^t$, from above we know the group's residual is zero by construction so we have a zero matrix. Therefore the inner matrix must be singular which implies the covariance matrix is also singular. 
+
+\clearpage
+\newpage

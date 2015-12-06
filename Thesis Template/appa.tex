@@ -1,0 +1,113 @@
+\chapter{Formal Theory Derivations}
+
+Let $\Omega$ represent the set of all possible opportunities. In each time period $t$, a potential entrepreneur $i$ makes a draw $\omega_{it} \subset \Omega$ from this set. To simplify assume each entrepreneur makes the same number of draws in each period. 
+
+Assume that ideas can be totally ordered based on each of the factors. Let $X:\Omega\to I^n \subset \mathbb{R}^n$ be a random variable where $n$ is the number of factors that can impact the decision to start a company. For example, consider an opportunity $\omega$ to start a software company. One of the factors required might be a software developer with an advanced knowledge of computer science. The random variable would assign a real number that represents the knowledge required to the dimension $j$ of $\mathbb{R}^n$ that represents software development skill as a factor. Another opportunity $\omega'$ that requires less advanced software development would be assigned a number less than the first opportunity. 
+$$X(\omega)^j > X(\omega')^j $$
+
+Let $r_i \in I^n$ represent the resources of the entrepreneur. To continue the example, the software entrepreneur may have access through her social network to a novice software developers but no connections to more advanced developers. An opportunity is executed by the entrepreneur if all required factors can be met by the entrepreneur. 
+$$r_i^j \ge X(\omega_{it})^j \; \forall j \in n$$
+
+\begin{comment}
+We call an idea \textit{unbounded} for an individual if the idea can be executed and \textit{single bounded} on dimension $k$ if
+$$\alpha_i^k = X(\omega{it})^k \wedge  \alpha_i^j > X(\omega{it})^j \; \forall j \ne k \in n$$
+\end{comment}
+
+The probability of an opportunity being executed by an entrepreneur with resources $r_i$ in time $t$ is therefore 
+$$Pr\left(\bigcap _{j=1}^n  r_i^j \ge X^j\right) = F_X(r)$$
+Let $F_Y$ represent the distribution of entrepreneurs with resources $r$ over the space of opportunities. Then the expected number of startups generated at time $t$ is then 
+\begin{align}
+\mathbb{E}_{Y}[F_X(r)]=\int_{I^n} F_X(r) dF_Y(r)
+\label{eq:total}
+\end{align}
+
+Consider how a change in the distribution of resources for one factor impacts the rate of startup creation along another factor's dimension. For example, increasing access to health care might impact the rate of firm creation for ideas requiring large amounts of capital differently than ideas require low amounts of capital. Let $\alpha$ represent the factor being changed, $\beta$ the factor we are measuring a reaction to, and $\Gamma$ be the set of all other factors. Let $\beta_0$ be a specific resource level on $\beta$ we are interested in and $[\underline{I_\beta}, \beta_0]$ the set of all resource levels that are equal to or less than $\beta_0$. We can write the total number of startups (\ref{eq:total}) that fall within that resource level as
+\begin{align*}
+& \int_{I^n} F_X(r) dF_Y(r)\\
+= & \int_{I^n} \int_{\underline{I^n}}^{r} dF_X(s) dF_Y(r)\\
+= & \int_{I^n} \int_{s}^{\overline{I^n}}  dF_Y(r) dF_X(s) \\
+= &  \int_{I_{\Gamma}} \int_{I_{\alpha,\beta}} \int_{s}^{\overline{I^n}}  dF_Y(r)dF_{X_{\alpha,\beta}}(a,b|U)
+ dF_{X_{\Gamma}}(U)\\
+= &  \int_{I_{\Gamma}} \int_{I_{\alpha,\beta}} \int_{U}^{\overline{I_\Gamma}} \int_{a,b}^{\overline{I_{\alpha,\beta}}} dF_{Y_{\alpha,\beta}}(s,t|V)dF_{Y_\Gamma}(V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{X_{\Gamma}}(U)\\
+= &  \int_{I_{\Gamma}} \int_{U}^{\overline{I_\Gamma}} \int_{I_{\alpha,\beta}} \int_{a,b}^{\overline{I_{\alpha,\beta}}} dF_{Y_{\alpha,\beta}}(s,t|V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{Y_\Gamma}(V) dF_{X_{\Gamma}}(U)\\
+= &  \int_{I_{\Gamma}} \int_{U}^{\overline{I_\Gamma}} \int_{I_{\beta}} \int_{I_{\alpha}} \int_{b}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dF_{Y_{\alpha,\beta}}(s,t|V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{Y_\Gamma}(V) dF_{X_{\Gamma}}(U)\\
+\implies S(\beta_0) = & \int_{I_{\Gamma}} \int_{U}^{\overline{I_\Gamma}} \int_{\underline{I_\beta}}^{\beta_0} \int_{I_{\alpha}} \int_{b}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dF_{Y_{\alpha,\beta}}(s,t|V) dF_{X_{\alpha,\beta}}(a,b|U) dF_{Y_\Gamma}(V) dF_{X_{\Gamma}}(U)
+\end{align*}
+Define a function $h$ that maps the conditional distribution entrepreneurs on resource $\alpha$ and a value $\beta_0$ to the rate of new enterprise creation at $\beta_0$ conditional on $\Gamma$.
+\begin{align*}
+h(G_{Y_\alpha},\beta_0|\Gamma) = \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) = \left. \frac{\partial S (\beta_0|\Gamma)}{\partial \beta} \right|_{G_{Y_{\alpha}}=F_{Y_{\alpha}}}
+\end{align*}
+
+Finally, use first order stochastic dominance to define a partial order on the set of all distributions for $G_{Y_\alpha}$. 
+
+\textbf{Proposition 3:} 
+The function $h$ has increasing differences in $G_{Y_\alpha}$ and $-\beta_0$ if $dF_{X_{\alpha,\beta}}$ is non-increasing in $\beta$. 
+
+\textbf{Proof:}
+Let $G'_{Y_\alpha}\mathop{\ge}_{\text{FOSD}} G_{Y_\alpha}$ and $\beta_0' \ge \beta_0$. Then $h$ has increasing differences in $G_{Y_\alpha}$ and $-\beta_0$ if and only if:
+\begin{align*}
+& h(G'_{Y_\alpha},\beta_0|\Gamma) - h(G'_{Y_\alpha},\beta_0'|\Gamma) \ge h(G_{Y_\alpha},\beta_0|\Gamma) - h(G_{Y_\alpha},\beta_0'|\Gamma)\\
+\iff & h(G'_{Y_\alpha},\beta_0|\Gamma) - h(G_{Y_\alpha},\beta_0|\Gamma) \ge h(G'_{Y_\alpha},\beta_0'|\Gamma) - h(G_{Y_\alpha},\beta_0'|\Gamma)\\
+\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG'_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
+& - \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\
+& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG'_{Y_{\alpha}}(s|t) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \\
+& - \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} dG_{Y_{\alpha}}(s|t) dF_{Y_{\beta_0}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')\\
+\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} (dG'_{Y_{\alpha}}(s|t) - dG_{Y_{\alpha}}(s|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
+& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} \int_{a}^{\overline{I_{\alpha}}} (dG'_{Y_{\alpha}}(s|t) - dG_{Y_{\alpha}}(s|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')\\
+\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (1-G'_{Y_{\alpha}}(a|t)) - (1-G_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
+& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} (1-G'_{Y_{\alpha}}(a|t)) - (1-G_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \\ 
+\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0) \\ 
+& \ge \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')
+\end{align*}
+$G'_{Y_\alpha} \mathop{\ge}_{\text{FOSD}} G_{Y_\alpha}$ implies $G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)$ is non-negative, so 
+\begin{align*}
+\int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0)
+\end{align*}
+is also non-negative since events can only have non-negative measure. Since $dF_{X_{\alpha,\beta}}$ is non-increasing in $\beta$, we have: 
+\begin{align*}
+& \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0)\\
+& \ge \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')
+\end{align*}
+So the proof would be completed if
+\begin{align*}
+& \int_{I_{\alpha}} \int_{\beta_0}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \\
+&  \ge  \int_{I_{\alpha}} \int_{\beta_0'}^{\overline{I_{\beta}}} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0')\\
+\iff & \int_{I_{\alpha}} \int_{\beta_0}^{\beta_0'} (G_{Y_{\alpha}}(a|t) - G'_{Y_{\alpha}}(a|t)) dF_{Y_{\beta}}(t) dF_{X_{\alpha,\beta}}(a,\beta_0') \ge 0\\
+\end{align*}
+Which again is true from $G'_{Y_\alpha} \mathop{\ge}_{\text{FOSD}} G_{Y_\alpha}$ and the restriction to non-negative measures. $\Box$ \\
+
+This modeling requires shocks to cause first order stochastically dominated shifts in access to a resource. The health care act fulfills this requirement if it only weakly increases the probability that an individual has enough access to health insurance to execute a given opportunity. It cannot for example change the distribution of access to capital or the distribution of ideas. We believe this is the case as long as we exclude firms in the health care sector from our analysis since the shock could have created new opportunities for health entrepreneurship.  
+
+The non-increasing condition can be interpreted as saying that we should not see more ideas for startups as the required amount of resources increases. Following our example, in general there should not be more opportunities that require high capital than ideas that require lower capital. If this condition fails to hold then we will obverse an attenuation of the modeled effect. 
+
+Note that the required FOSD shift in $\alpha$ is allowed to be conditional on the level of resource $\beta$ possessed by the entrepreneur. In our example we can imagine entrepreneurs with access to high levels of capital to be less effected by the health care act than entrepreneurs with access to low levels of capital.  
+
+\begin{comment}
+
+Next, consider how an increase in the distribution of $F_{Y_\alpha}$ impacts ideas from previous periods if those ideas are retained by the entrepreneur. Each period $T$'s expected number of startups becomes
+\begin{align}
+\mathbb{E}^T_Y[F_{X}] = \mathbb{E}_{Y_T}[F_{X}] + \sum_{t=0}^{T-1} max(0,\mathbb{E}_{Y_T}[F_{X}] - max(\mathbb{E}_{Y_i}[F_{X}] \forall i \in T{-}1,\dots,t)))
+\label{eq:prop4}
+\end{align}
+This implies the expected number of startups should decrease after the initial shift in $F_{Y_\alpha}$ when the distribution of other constraints $F_{Y_{-\alpha}}$ is held constant over time. 
+
+\textbf{Proposition 4:} If in any three consecutive periods $t=0,1,2$
+\begin{enumerate}[(a)]
+\item $F_{Y_\alpha,t=1} \mathop{\ge}_{\text{FOSD}} F_{Y_\alpha,t=0} $
+\item $F_{Y_\alpha,t=1} = F_{Y_\alpha,t=2} $
+\item $F_{Y_{-\alpha}|\alpha,t=0} = F_{Y_{-\alpha}|\alpha,t=1} =F_{Y_{-\alpha}|\alpha,t=2}$
+\end{enumerate}
+then
+\begin{enumerate}[(a)]
+\setcounter{enumi}{3}
+\item $\mathbb{E}_{Y}[F_{Y_\alpha,t=1}] \ge \mathbb{E}_{Y}[F_{Y_\alpha,t=2}]$
+\item $\mathbb{E}_{Y}[F_{Y_\alpha,t=2}] \ge \mathbb{E}_{Y}[F_{Y_\alpha,t=0}]$
+\end{enumerate}
+
+\textbf{Proof:} (d) follows from (\ref{eq:prop4}) and the expectation properties of first order stochastic dominance. (e) follows also from the properties of first order stochastic dominance.
+
+\end{comment}
+
+
+\clearpage
+\newpage

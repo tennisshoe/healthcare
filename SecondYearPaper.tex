@@ -29,6 +29,14 @@
 We study the effect of improved access to health insurance on entrepreneurial rates across industries. We use the 2006 reform of the Massachusetts health care market as our shock. In contrast to previous research, we use our shock to test which kinds of startups were more likely to be created in addition to whether individuals became more likely to become entrepreneurs.  We develop a theoretical model uses institutional heterogeneity to make predictions on how the reform should affect the distribution of entrepreneurs across industries. We see evidence that although non-profit entrepreneurship was significantly affected, overall entrepreneurship is constrained by factors other than access to health care. 
 \end{abstract}
 
+\subsection*{Feedback Questions}
+
+\begin{itemize}
+	\item What audience should the paper target?
+	\item How to strengthen paper's appeal to that audience?
+	\item Where I can read to better understand inference on matching in a diff-and-diff setting? View matching as applying function f() onto data's \{Y,X\} observations, generating \{Y',X'\}. Intuitively I want to use delta method on f(\{Y,X\}) for inference rather than use linear \{Y',X'\}. Don't think weighting matrix is sufficient since weights are a function of \{Y,X\}.
+\end{itemize}
+
 
 \section{Introduction}
 Traditionally health insurance in the US has been tied to employment through group plans. In 2013, only 17\% of Americans with private insurance\footnote{Non-private insurance is composed of Medicare, Medicaid and military health care} obtained it through the individual market \cite{census}. The differences between group and individual insurance are material for entrepreneurs leaving employment to start their own firms. Those that need coverage on the individual market face higher premiums or even the inability to purchase health insurance \cite{kaiser}. Uncertainty is also greater on the individual market; it is more likely for a person with an individual plan to lose insurance than someone under a group plan \cite{pauly}. 
@@ -431,7 +439,7 @@ However we find the magnitude of our results to be sensitive to the control grou
 	\begin{table}[H]
 		\centering
 			\caption{Diff-in-diff estimator of yearly percentage change in self-employment} 
-		\input{tmp/prop1_control_diff_se_pop.tex}	
+		\input{resources/prop1_control_diff_se_pop.tex}	
 		\label{tab:control}
 	\end{table}		
 \end{center}
@@ -442,6 +450,7 @@ However we find the magnitude of our results to be sensitive to the control grou
 \multicolumn{4}{l}{\footnotesize \space US counties with similar income, age, urban and insurance rate characteristics. }\\
 s. 
 \end{comment}
+
 We interpret these findings to mean any possible effect our shock had on self-employment is likely to be too small to detect using the publicly available census data on individuals. We believe the sensitivity to control explains why the Becker and Tuzemen \cite{tuzemen} results differ from the Heim and Lurie results \cite{heimLurie}. 
 
 \subsection{Long Run Tax Impact}
@@ -454,7 +463,7 @@ The magnitude of our observed effect is large. Our estimate suggests that an ind
 	\footnotesize
 	\centering
 	\caption{Impact of health reform on non-profit non-employers}
-	\input{tmp/nonprofit.tex}
+	\input{resources/nonprofit.tex}
 	\label{tab:nonprofit}
 \end{table}
 
@@ -493,7 +502,7 @@ We next turn to Proposition 4 which provides us with more statistical accuracy i
     \footnotesize
 	\centering
 	\caption{Impact of health reform on low capital industries}
-	\input{tmp/capital.tex}
+	\input{resources/capital.tex}
 	\label{tab:capital_ne}
 \end{table} 
 
@@ -763,6 +772,7 @@ Change_{sct} & = \alpha_c + \gamma_s + \delta_t + \beta \, \mathbf{1}\{\text{cou
 Here $\rho$ is a random variable with distribution $\mathcal{F}$, $\mu$ is a random variable with distribution $\mathcal{G}$ and $\upsilon$ is a random variable with distribution $\mathcal{H}$. We estimate $\hat{\rho}_{sc}$ for each county in New England by regressing $Change_{sct}$ against $Change_{sc(t-1)}$ in our self-employed dataset. $\mathcal{F}$ is then approximated by taking uniform draws from the set of $\hat{\rho}_{sc}$'s. We group the residuals from the $\hat{\rho}_{sc}$ estimation by state and divide them by $1/(1-\hat{\rho}_{sc})$ to generate a set of $\hat{\epsilon}_{sct}$ values. We use the mean of $\hat{\epsilon}_{sct}$ values grouped by state and year to produce a set of $\hat{\mu}_{st}$ values that once standardized appropriate $\mathcal{G}$. Then $\hat{\epsilon}_{sct}$ minus the corresponding $\hat{\mu}_{st}$ values produce a set of $\hat{\upsilon}_{sct}$ draws that once standardized approximate $\mathcal{H}$.
 \end{comment}
 \begin{align}
+\label{eq:mc_dist}
 Change_{sct} & = \alpha_c + \gamma_s + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \xi_{sct} \\
 \xi_{sct} & = 
 \begin{cases}\rho_{sc} \, \xi_{sc(t-1)} + (1-\rho_{sc}) \epsilon_{sct} &\mbox{if } t > 1 \nonumber \\ 
@@ -770,9 +780,9 @@ Change_{sct} & = \alpha_c + \gamma_s + \delta_t + \beta \, \mathbf{1}\{\text{cou
 \end{align}
 Here $\rho$ is a random variable with distribution $\mathcal{F}$ and $\epsilon$ is a random variable with distribution $\mathcal{G}_s$ that varies by state. We estimate $\hat{\rho}_{sc}$ for each county in New England by regressing $Change_{sct}$ against $Change_{sc(t-1)}$ in our self-employed dataset. $\mathcal{F}$ is then approximated by taking uniform draws from the set of $\hat{\rho}_{sc}$'s. We group the residuals from the $\hat{\rho}_{sc}$ estimation by state and divide them by $1/(1-\hat{\rho}_{sc})$ to similarly create approximations for the $\mathcal{G}_s$ set. 
 
-In order to test for Type 1 error, we set $\beta$ to zero in equation 8, simulate the data and drop our first year's observations since they lack an auto-correlated term. To test Type 2 error, we set $\beta$ equal to a third of the standard deviation of $Change_{sct}$. Through experiment we determined this value produced sufficient variation between our inference methods for comparison. We run fixed effects regressions under homeostatic, robust, stated clustered and auto-regressive error assumptions. We also calculate Newey-West errors with a 3 year and we use a 2 step block bootstrap method with re-sampling of counties within states using the scaling correction suggested by Rao and Wu \cite{rao}. 
+In order to test for Type 1 error, we set $\beta$ to zero in model (\ref{eq:mc_dist}), simulate the data and drop our first year's observations since they lack an auto-correlated term. To test Type 2 error, we set $\beta$ equal to a third of the standard deviation of $Change_{sct}$. Through experiment we determined this value produced sufficient variation between our inference methods for comparison. We run fixed effects regressions under homeostatic, robust, stated clustered and auto-regressive error assumptions. We also calculate Newey-West errors with a 3 year and we use a 2 step block bootstrap method with re-sampling of counties within states using the scaling correction suggested by Rao and Wu \cite{rao}. 
 
-Table \ref{tab:mc} presents the results. We see that fixed effects under AR(1) assumptions does the best overall. However the assumption of an AR(1) process was baked into our data generating process through our functional form; it may not accurately reflect our observed data. We therefore select robust inference as preferred for our dataset since robust errors do not show excessive Type 1 error and it performs slightly better than our bootstrap procedure on Type 2 error.
+Table \ref{tab:mc} presents the results. We see that fixed effects under AR(1) assumptions does the best overall. However the assumption of an AR(1) process was baked into our data generating process through our functional form; it may not accurately reflect our observed data. We therefore select Huber-White inference as preferred for our dataset conditional on this data generating model since robust errors do not show excessive Type 1 error and it performs slightly better than our bootstrap procedure on Type 2 error.
 
 \begin{table}[H]
 	\centering
@@ -801,7 +811,47 @@ Table \ref{tab:mc} presents the results. We see that fixed effects under AR(1) a
 	\label{tab:mc}
 \end{table}
 
+Next we consider a slightly different model with state level errors. 
+\begin{align}
+\label{eq:mc_state}
+	Change_{sct} & = \alpha_c + \gamma_s + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \xi_{sct} \\
+	\xi_{sct} & = 
+	\begin{cases}\rho_{sc} \, \xi_{sc(t-1)} + (1-\rho_{sc}) \epsilon_{sct} &\mbox{if } t > 1 \nonumber \\ 
+		\epsilon_{sct}  & \mbox{if } t = 1. \end{cases} \nonumber \\
+ 	\epsilon_{sct} & = \upsilon_{st} + \mu_{ct}		\nonumber
+\end{align}
+$\rho$ is a random variable with distribution $\mathcal{F}$, $\upsilon$ has distribution $\mathcal{H}$ and $\mu$ has distribution $\mathcal{I}$. We again estimate $\hat{\rho}_{sc}$ and $\hat{\epsilon}_{sct}$ as for model (\ref{eq:mc_dist}), with $\mathcal{F}$ appropriated by the empirical distribution of $\hat{\rho}_{sc}$. Then we use the fact that for a given state $s'$ and time $t'$
+$$\mathbb{E}[\epsilon_{sct}|s=s', t=s'] = \mathbb{E}[\upsilon_{st}|s=s', t=s'] + \mathbb{E}[\mu_{ct}|s=s', t=s']=v_{s't'}$$
+to recover estimates $\hat{\upsilon}_{st}$ by using the set of county observations for each state in each time period. Then we produce estimates  $\hat{\mu}_{ct}$ by subtracting $\hat{\upsilon}_{st}$ from $\hat{\epsilon}_{sct}$ for each observation. The empirical distribution of $\hat{\upsilon}_{st}$ and $\hat{\mu}_{ct}$ approximate  $\mathcal{H}$ and $\mathcal{I}$. 
 
+Results for the model (\ref{eq:mc_state}) data generating process are given in Table \ref{tab:mc_state}. This model specification is a challenge for all our inference methods. We again select Huber-White inference as preferred since it performs well relative to the alternatives. 
+
+\begin{table}[H]
+	\centering
+	\caption{Monte Carlo Simulation of Type 1 and 2 Errors}
+	\begin{tabular}{lrrrr} \hline \hline
+		Specification &(1) & (2) & (3) & (4)  \\  
+		\hline \textbf{Simulation Parameters} & & & & \\
+		States &   5 &    2 & 5 & 2\\
+		Counties per State &        10 &        100 & 10 & 100\\
+		Years of Observations &        12 &        12 & 12 & 12 \\
+		Treatment Value &        0 &        0 & $\sigma_{Y}/20$ & $\sigma_{Y}/20$\\
+		Draws &       200 & 200 & 200 & 200\\
+		\hline \multicolumn{5}{l}{\textbf{Percent Rejecting Null Hypothesis}} \\
+		Fixed Effects OLS &      22\% &      47\%& 53\%& 81\%\\
+		FE Huber-White &       11\% &       10.5\%& 42\%& 69\%\\
+		FE Clustered by State &         30\% &         49\%& 52.5\% & 45.5\%\\
+		FE AR(1) Process &         \textbf{4.5\%} &         23\%& 23.5\%& 90.5\%\\
+		Panel Newey-West &         21.5\% &         29.5\%& 53.5\% & 77\%\\
+		Block Bootstrap &        7\% &         12.5\%& 32.5\%& 69\%\\
+		\hline \hline 
+		\multicolumn{5}{l}{\footnotesize 95\% confidence interval used to test null hypothesis. Bold  }\\
+		\multicolumn{5}{l}{\footnotesize indicates values that either do not over-reject null when true }\\
+		\multicolumn{5}{l}{\footnotesize  treatment is zero or do not under-reject null when true  }\\
+		\multicolumn{5}{l}{\footnotesize treatment is non-zero. }\\
+	\end{tabular}	
+	\label{tab:mc_state}
+\end{table}
 \begin{comment}
 
 \subsection*{Appendix B}
@@ -843,7 +893,7 @@ We therefore omit projects with goals \$5,000,000 or greater from the density es
 \begin{thebibliography}{99}
 
 \bibitem{abadie}
-Abadie, Alberto, Alexis Diamond, and Jens Hainmueller. ``Synthetic control methods for comparative case studies: Estimating the effect of California’s tobacco control program.'' Journal of the American Statistical Association 105.490 (2010).
+Abadie, Alberto, Alexis Diamond, and Jens Hainmueller. ``Synthetic control methods for comparative case studies: Estimating the effect of California's tobacco control program.'' Journal of the American Statistical Association 105.490 (2010).
 
 \bibitem{bailey}
 Bailey, James B., ``Health Insurance and the Supply of Entrepreneurs: New Evidence from the Affordable Care Act's Dependent Coverage Mandate'' (March 7, 2013). 

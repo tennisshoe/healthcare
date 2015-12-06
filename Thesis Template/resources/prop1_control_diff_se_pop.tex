@@ -1,0 +1,28 @@
+{
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{3}{c}}
+\hline\hline
+          &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}&\multicolumn{1}{c}{(3)}\\
+\hline
+Massachusetts $\times$ Post 2007&    0.075** &    0.063   &    0.040   \\
+          &  (0.030)   &  (0.037)   &  (0.031)   \\
+[1em]
+Year FE   &      Yes   &      Yes   &      Yes   \\
+[1em]
+State FE  &      Yes   &      Yes   &      Yes   \\
+[1em]
+County FE &      Yes   &      Yes   &      Yes   \\
+\hline
+\(N\)     &      804   &      264   &      336   \\
+\(R^{2}\) &    0.050   &    0.136   &    0.109   \\
+Control   &New England   &Border Counties   &Synthetic   \\
+Weight    &Population   &Population   &Population   \\
+\hline\hline
+\multicolumn{4}{l}{\footnotesize Standard errors in parentheses}\\
+\multicolumn{4}{l}{\footnotesize * p<0.10, ** p<0.05, *** p<0.01}\\
+\multicolumn{4}{l}{\footnotesize Diff-in-diff model of health care reform from 2000 to 2012 with Massachusetts treated after 2007. }\\
+\multicolumn{4}{l}{\footnotesize Maine, Connecticut, Vermont, Rhode Island and New Hampshire used as controls in column (1). }\\
+\multicolumn{4}{l}{\footnotesize Column (3) uses a synthetic control model that matches each Massachuetts county pre-trend against}\\
+\multicolumn{4}{l}{\footnotesize \space US counties with similar income, age, urban and insurance rate characteristics. }\\
+\end{tabular}
+}
