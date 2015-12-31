@@ -4544,6 +4544,10 @@ program define Results_Control
 		eststo DD_SE_NE: xtreg `y_variable' treatment ib`base_year'.year state_fe county_fe [pw=pweight] if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
 		estadd local control "New England" 
 		estadd local cluster "County"	
+		estadd local weight "Population"	
+		eststo DD_SE_NE_S: xtreg `y_variable' treatment ib`base_year'.year state_fe county_fe [pw=pweight] if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust cluster(stcode)
+		estadd local control "New England" 
+		estadd local cluster "County"	
 		estadd local weight "Population"		
 
 		preserve
@@ -4579,13 +4583,21 @@ program define Results_Control
 		eststo DD_SE_BO: xtreg `y_variable' treatment ib`base_year'.year state_fe county_fe [pw=pweight] if border==1, fe robust
 		estadd local control "Border Counties" 
 		estadd local cluster "County"	
+		estadd local weight "Population"	
+		eststo DD_SE_BO_S: xtreg `y_variable' treatment ib`base_year'.year state_fe county_fe [pw=pweight] if border==1, fe robust cluster(stcode)
+		estadd local control "Border Counties" 
+		estadd local cluster "County"	
 		estadd local weight "Population"		
 		drop border
 		
-		* and synthetic
-		GenerateSynthetic "`y_variable'"
+		* and synthetic, comment out first line to used cached synthetics
+		//GenerateSynthetic "`y_variable'"
 		CreateSynthetic 25 "`y_variable'" `base_year'
 		eststo DD_SE_SY: xtreg `y_variable' treatment ib2007.year state_fe county_fe if inlist(stcode, 0,25) [pw=pweight], fe robust
+		estadd local control "Synthetic" 
+		estadd local cluster "County"	
+		estadd local weight "Population"		
+		eststo DD_SE_SY_S: xtreg `y_variable' treatment ib2007.year state_fe county_fe if inlist(stcode, 0,25) [pw=pweight], fe robust cluster(stcode)
 		estadd local control "Synthetic" 
 		estadd local cluster "County"	
 		estadd local weight "Population"		
@@ -4613,16 +4625,21 @@ program define Results_Control
 		outsheet year beta using $dir/tmp/point_ne_synth.csv, comma	replace
 		restore
 				
-		drop if stcode == 0
-
 		esttab DD_SE_NE DD_SE_BO DD_SE_SY using $dir/tmp/prop1_control_`y_variable'.tex, ///
 			mtitles("(1)" "(2)" "(3)")   ///
 			keep("Massachusetts $\times$ Post 2007")  ///
 			rename(treatment "Massachusetts $\times$ Post `base_year'") ///
-			nobaselevels nonumbers replace compress se r2 scalar("control Control" "weight Weight") ///
+			nobaselevels nonumbers replace compress se r2 scalar("F F-test" "control Control" "weight Weight") ///
 			indicate("Year FE = *.year" "State FE = state_fe" "County FE = county_fe") ///
-			sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01) 	
-		
+			sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01) 	
+
+		esttab DD_SE_NE_S DD_SE_BO_S DD_SE_SY_S using $dir/tmp/prop1_control_state_`y_variable'.tex, ///
+			mtitles("(1)" "(2)" "(3)")   ///
+			keep("Massachusetts $\times$ Post 2007")  ///
+			rename(treatment "Massachusetts $\times$ Post `base_year'") ///
+			nobaselevels nonumbers replace compress se r2 scalar("F F-test" "control Control" "weight Weight") ///
+			indicate("Year FE = *.year" "State FE = state_fe" "County FE = county_fe") ///
+			sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01) 				
 	* }
 
 end
@@ -4634,7 +4651,10 @@ program define SetupLongData
 	
 			use $dir/tmp/nonemployedLong.dta, clear
 			drop if naics >= 9900 & naics < 10000
-			drop if naics >= 6200 & naics < 6240
+			* don't think I can trust any of the 62 industry 
+			* elderly care nonprofits take masshealth funds as payment
+			* drop if naics >= 6200 & naics < 6240
+			drop if naics >= 6200 & naics < 6300
 			drop if naics >= 9500 & naics < 9600
 			drop if year < 2000
 			ren small ne_est        
@@ -4645,7 +4665,10 @@ program define SetupLongData
 
 			use $dir/tmp/countyBusinessLong.dta, clear
 			drop if naics >= 9900 & naics < 10000
-			drop if naics >= 6200 & naics < 6240
+			* don't think I can trust any of the 62 industry 
+			* elderly care nonprofits take masshealth funds as payment
+			* drop if naics >= 6200 & naics < 6240
+			drop if naics >= 6200 & naics < 6300
 			drop if naics >= 9500 & naics < 9600
 			ren small emp_est
 			drop if cntycd == 999
@@ -4696,7 +4719,8 @@ program define Results_Nonprofit
 	drop _merge
 	* shouldn't be necessary
 	drop if missing(percent_nonprofit)
-	gen nonprofit = percent_nonprofit >= .5
+	su percent_nonprofit
+	gen nonprofit = percent_nonprofit >= r(mean)
 	tab naics nonprofit
 	* drop percent_nonprofit naicsdisplaylabel	
 	* gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
@@ -4715,6 +4739,8 @@ program define Results_Nonprofit
 	drop if missing(nonprofit)
 	
 	gen naics_fe = floor(naics / 100)
+	* don't have enough groups to identify the fixed effects with 4 digit industry codes
+	* gen naics_fe = naics
 
 	/*
 	preserve
@@ -4731,20 +4757,31 @@ program define Results_Nonprofit
 	* Standard regression compariable to previous work
 	eststo DD_NE_NE: xtreg `y_variable' treatment ib`base_year'.year c n s if state_ne == 25, fe robust
 	estadd local control "Within MA" 
-	eststo DDD_NE_NE: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if !missing(state_ne), fe robust
+	
+	* ensuring the f-test works
+	bysort county_ne: egen county_count = count(`y_variable') if !missing(state_ne)
+	bysort naics_fe: egen naics_count = count(`y_variable') if !missing(state_ne) & county_count > 132
+	eststo DDD_NE_NE: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if !missing(state_ne) & county_count > 132 & naics_count > 132, fe robust
 	estadd local control "New England" 
+	drop county_count naics_count
 	
 	* using border counties	
 	merge n:1 stcode cntycd using $dir/tmp/border_counties
 	drop _merge
-	* drop if missing(border) | border == 0
-	eststo DD_NE_BO: xtreg `y_variable' treatment ib`base_year'.year c n s if state_bo == 25 & border == 1, fe robust
-	estadd local control "Within MA" 
-	eststo DDD_NE_BO: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1, fe robust
+	
+	* restricting to common support by removing naics that only exist in MA
+	* not sure this why I'm doing this anymore
+	* bysort naics: egen naics_count = total(state_bo != 25) if border == 1	
+	
+	bysort county_bo: egen county_count = count(`y_variable') if border==1
+	bysort naics_fe: egen naics_count = count(`y_variable') if border==1 & county_count > 132
+	eststo DDD_NE_BO: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1 & county_count > 132 & naics_count > 132, fe robust
 	estadd local control "Border Counties" 
-	drop border	
+	drop county_count naics_count border	
 
 	* GenerateSynthetic "`y_variable'"
+	use $dir/tmp/results_nonprofit, replace	
+	/*
 	CreateSynthetic 25 "`y_variable'" `base_year'
 	gen state_sy = stcode if inlist(stcode, 0, 25)
 	egen county_sy = group(state_sy cntycd)
@@ -4752,20 +4789,19 @@ program define Results_Nonprofit
 	* gen treatment = (stcode == 25) & (year > `base_year') & (nonprofit == 1)
 	gen treatment = (stcode == 25) * (year > `base_year') * percent_nonprofit
 	gen treatment_ddd = treatment
-	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s if state_sy == 25, fe robust
-	estadd local control "Synth" 	
-	eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n, fe robust
-	estadd local control "Synth" 	
-	
-	* gen treatment_dd = (stcode == 25) & (year > `base_year')
-	* xtreg `y_variable' treatment_dd ib2007.year if stcode == 25, fe robust 	
+	*/
 
+	bysort county_sy: egen county_count = count(`y_variable')
+	bysort naics_fe: egen naics_count = count(`y_variable') if county_count > 132
+	eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if county_count > 132 & naics_count > 132, fe robust
+	drop county_count naics_count
+	estadd local control "Synthetic" 
+	
 	save $dir/tmp/results_nonprofit, replace	
 	
-*                 varlabels(treatment "Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ Non-profit $\times$ Post 2007") ///
     esttab DD_NE_NE DDD_NE_NE DDD_NE_BO DDD_NE_SY using $dir/tmp/nonprofit.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
-                 varlabels(treatment "\% Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ \% Non-profit $\times$ Post 2007") ///
+                varlabels(treatment "\% Non-profit $\times$ Post 2007" treatment_ddd "MA $\times$ \% Non-profit $\times$ Post 2007") ///
                 keep(treatment treatment_ddd)  ///
                 indicate("County $\times$ Year FE = *.county_??#2008*" ///
                         "Industry $\times$ Year FE = *.naics_fe#2008*" ///
@@ -4774,11 +4810,14 @@ program define Results_Nonprofit
                         "County FE = c" ///
                         "State FE = s" ///
                         "Industry FE = n") ///
-                nonumbers replace compress se r2 scalar("control Control")  sfmt(%9.3f %9.0f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
+                nonumbers replace compress se r2 scalar("F F-test" "control Control")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
 
 end
 
 program define Results_Capital
+
+	log close
+	log using $dir/tmp/resultsCapital.log, replace
 
 	local y_variable diff_ne_pop
 	local base_year 2007	
@@ -4788,6 +4827,8 @@ program define Results_Capital
 	if "`y_variable'" == "diff_ne_pop" {
 			local capitalFile "$dir/tmp/capitalNonemployer.dta"
 	}
+	
+	local includeTwoTreatment 0
 	
 	gen naics_4 = naics
 	replace naics = floor(naics/100)
@@ -4831,8 +4872,8 @@ program define Results_Capital
 	
 	* gen naics_fe = floor(naics / 100)
 	gen naics_fe = naics
-	log using $dir/tmp/resultsCapital.log
 
+	/*
 	preserve
 	levelsof year, local(years)
 	foreach year of local years {
@@ -4843,39 +4884,55 @@ program define Results_Capital
 	xtreg `y_variable' iTYear* i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
 	GraphPoint iTYear `base_year' "Non-Employers Capital Triple Differences" "_capital_ne"
 	restore	
+	*/
 	
 	* Standard regression compariable to previous work
-	eststo DD_NE: xtreg `y_variable' treatment ib`base_year'.year c n s if state_ne == 25, fe robust
+	eststo DD_NE: xtreg `y_variable'  ib`base_year'.year c n s treatment if state_ne == 25, fe robust
 	estadd local control "Within MA" 
-	eststo A_DD_NE: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_ne == 25, fe robust
-	test single_treat = post_treat
-	estadd scalar test = r(p)	
-	estadd local control "Within MA" 
+	if(`includeTwoTreatment') {	
+		eststo A_DD_NE: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_ne == 25, fe robust
+		test single_treat = post_treat
+		estadd scalar test = r(p)	
+		estadd local control "Within MA" 
+	}
 	
-	eststo DDD_NE: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
+	* restricting to common support by removing naics that only exist in MA
+	bysort naics_fe: egen naics_count = total(stcode != 25) if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	bysort county_ne: egen county_count = count(`y_variable') if inlist(stcode, 9, 23, 25, 33, 44, 50) & naics_count > 132
+	
+	eststo DDD_NE: xtreg `y_variable'  i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n treatment_ddd if inlist(stcode, 9, 23, 25, 33, 44, 50) & county_count > 132 & naics_count > 132, fe robust
 	estadd local control "New England" 
-	eststo A_DDD_NE: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50), fe robust
-	test single_treat_ddd = post_treat_ddd
-	estadd scalar test = r(p)
-	estadd local control "New England" 
+	if(`includeTwoTreatment') {	
+		eststo A_DDD_NE: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_ne#ib`base_year'.year c_n if inlist(stcode, 9, 23, 25, 33, 44, 50) & county_count > 132, fe robust
+		test single_treat_ddd = post_treat_ddd
+		estadd scalar test = r(p)
+		estadd local control "New England" 
+	}	
+	drop county_count 
 	
 	* using border counties	
 	merge n:1 stcode cntycd using $dir/tmp/border_counties
 	drop _merge
-	eststo DD_BO: xtreg `y_variable' treatment ib`base_year'.year c n s if state_bo == 25 & border == 1, fe robust
+	eststo DD_BO: xtreg `y_variable'  ib`base_year'.year c n s  treatment if state_bo == 25 & border == 1, fe robust
 	estadd local control "Within MA" 
-	eststo A_DD_BO: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_bo == 25 & border == 1, fe robust
-	test single_treat = post_treat
-	estadd scalar test = r(p)
-	estadd local control "Within MA" 
-	eststo DDD_BO: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1, fe robust
-	estadd local control "Border Counties" 
-	eststo A_DDD_BO: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1, fe robust
-	test single_treat_ddd = post_treat_ddd
-	estadd scalar test = r(p)
-	estadd local control "Border Counties" 
+	if(`includeTwoTreatment') {	
+		eststo A_DD_BO: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_bo == 25 & border == 1, fe robust
+		test single_treat = post_treat
+		estadd scalar test = r(p)
+		estadd local control "Within MA" 
+	}	
+	eststo DDD_BO: xtreg `y_variable'  i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n treatment_ddd if border==1, fe robust
+	estadd local control "Border Counties" 	
+	if(`includeTwoTreatment') {	
+		eststo A_DDD_BO: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_bo#ib`base_year'.year c_n if border==1, fe robust
+		test single_treat_ddd = post_treat_ddd
+		estadd scalar test = r(p)
+		estadd local control "Border Counties" 
+	}
 	drop border	
 
+	use $dir/tmp/results_capital, replace
+	/*
 	CreateSynthetic 25 "`y_variable'" `base_year'
 	gen state_sy = stcode if inlist(stcode, 0, 25)
 	egen county_sy = group(state_sy cntycd)
@@ -4889,6 +4946,7 @@ program define Results_Capital
 	gen treatment_ddd = treatment
 	gen single_treat_ddd = single_treat
 	gen post_treat_ddd = post_treat	
+	*/
 
 	* As robustness check can get f-test to work by dropping cells with low number of observations
 	* Need north of 132 = 11 * 12 items per panel on each dimention
@@ -4901,19 +4959,22 @@ program define Results_Capital
 	* drop if t < 12
 	* drop t
 
-	eststo DD_NE_SY: xtreg `y_variable' treatment ib`base_year'.year c n s if state_sy == 25, fe robust
-	estadd local control "Synth"    
-	eststo A_DD_NE_SY: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_sy == 25, fe robust
-	test single_treat = post_treat
-	estadd scalar test = r(p)
-	estadd local control "Synth"    
+	eststo DD_NE_SY: xtreg `y_variable'  ib`base_year'.year c n s treatment if state_sy == 25, fe robust
+	estadd local control "Synthetic"   
+	if(`includeTwoTreatment') {	
+		eststo A_DD_NE_SY: xtreg `y_variable' single_treat post_treat ib`base_year'.year c n s if state_sy == 25, fe robust
+		test single_treat = post_treat
+		estadd scalar test = r(p)
+		estadd local control "Synthetic"    
+	}
 	eststo DDD_NE_SY: xtreg `y_variable' treatment_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if inlist(state_sy, 0, 25), fe robust vsquish
-	estadd local control "Synth" 
-	eststo A_DDD_NE_SY: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if inlist(state_sy, 0, 25), fe robust
-	test single_treat = post_treat
-	estadd scalar test = r(p)
-	estadd local control "Synth" 
-
+	estadd local control "Synthetic" 
+	if(`includeTwoTreatment') {	
+		eststo A_DDD_NE_SY: xtreg `y_variable' single_treat_ddd post_treat_ddd i.naics_fe#ib`base_year'.year i.county_sy#ib`base_year'.year c_n if inlist(state_sy, 0, 25), fe robust
+		test single_treat = post_treat
+		estadd scalar test = r(p)
+		estadd local control "Synthetic" 
+	}
 	/*
 	preserve
 	levelsof year, local(years)	
@@ -4932,21 +4993,22 @@ program define Results_Capital
    *   varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
 
    esttab DD_NE DDD_NE DDD_BO DDD_NE_SY using $dir/tmp/capital.tex, ///
-                mtitles("(1)" "(2)" "(3)" "(4)")   ///
-                varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
-                keep(treatment treatment_ddd)  ///
-                indicate("County $\times$ Year FE = *.county_??#2008*" ///
-                        "Industry $\times$ Year FE = *.naics_fe#2008*" ///
-                        "County $\times$ Industry FE = c_n" ///
-                        "Year FE = 2008.year" ///
-                        "County FE = c" ///
-                        "State FE = s" ///
-                        "Industry FE = n") ///
-                nonumbers replace compress se r2 scalar("control Control")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
+			mtitles("(1)" "(2)" "(3)" "(4)")   ///
+			varlabels(treatment "Low Capital $\times$ Post 2007" treatment_ddd "MA $\times$ Low Capital $\times$ Post 2007") ///
+			keep(treatment treatment_ddd)  ///
+			indicate("County $\times$ Year FE = *.county_??#2008*" ///
+					"Industry $\times$ Year FE = *.naics_fe#2008*" ///
+					"County $\times$ Industry FE = c_n" ///
+					"Year FE = 2008.year" ///
+					"County FE = c" ///
+					"State FE = s" ///
+					"Industry FE = n") ///
+			nonumbers replace compress se r2 scalar("F F-test" "control Control")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
 
 	* post_treat "\% Low Capital $\times$ Post 2010" ///
-
-	esttab A_DD_NE A_DDD_NE A_DDD_BO A_DDD_NE_SY using $dir/tmp/capital_ext.tex, ///
+	
+	if(`includeTwoTreatment') {	
+		esttab A_DD_NE A_DDD_NE A_DDD_BO A_DDD_NE_SY using $dir/tmp/capital_ext.tex, ///
                 mtitles("(1)" "(2)" "(3)" "(4)")   ///
                 varlabels(single_treat "Low Capital $\times$ 2008 to 2009" ///
 				post_treat "Low Capital $\times$ Post 2010" ///
@@ -4956,8 +5018,58 @@ program define Results_Capital
                 indicate("County $\times$ Year FE = *.county_??#2008*" ///
                         "Industry $\times$ Year FE = *.naics_fe#2008*" ///
                         "County $\times$ Industry FE = c_n") ///
-                nonumbers replace compress se r2 scalar("control Control" "test Pr(Init=Long)")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
-				
+                nonumbers replace compress se r2 scalar("F F-test" "test Pr(Init=Long)" "control Control")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
+	}
+end
+
+program define Results_Arts
+
+	use $dir\Data\Arts\sppa1982-2012_stata.dta, clear
+	* we don't have state information prior to 2002
+	drop if year < 2002
+	drop persid month language OWN_RENT housing telephone income hhsize region
+	drop FIPS_CBSA CITY_STATUS METRO_STATUS metro FIPS_CSA SMSA_STATUS FIPS_MSA
+	drop age afever education race ethnicity hispanic citizen lfstatus jobs
+	drop workhours WORKHOURS_LW
+	drop books BOOKS_N READ_NOVELS READ_POETRY READ_PLAYS literature
+	drop FATHER_EDUC MOTHER_EDUC CHILD5TO17 agegroup
+	drop LAND_USE HOUSING_UNITS MOTOR_VEHICLES TENURE_MONTHS TENURE_YEARS MOVED_NUM CHILD0TO5 CHILD6TO11 
+	
+	ren FIPS_STATE  stcode
+	gen state_ne = stcode if inlist(stcode, 9, 23, 25, 33, 44, 50)
+	* county information is not available for MA
+	drop FIPS_COUNTY
+	* ren FIPS_COUNTY cntycd
+
+	local base_year 2008
+	gen treatment = state_ne == 25 & year > 2007
+	gen married = marital == 1
+	egen panel = group(state_ne gender married employed)
+	
+	local y_variable jazz
+	* no data on salsa + festival in 2002
+	* foreach y_variable in jazz classical opera musical play ballet dance artmuseum park {
+	foreach y_variable in JAZZ_N CLASSICAL_N OPERA_N MUSICAL_N PLAY_N BALLET_N DANCE_N ARTMUSEUM_N PARK_N {
+		
+		replace `y_variable' = 0 if missing(`y_variable')
+	
+		gen pop_weighted_response = `y_variable' * weight
+		bysort year state_ne gender married employed: egen total_pop = total(weight)
+		bysort year state_ne gender married employed: egen total_pop_weighted_response = total(pop_weighted_response)
+		gen average_response = total_pop_weighted_response / total_pop
+		bysort year state_ne gender married employed: gen in_set = _n == 1 & !missing(state_ne)
+		
+		list year state_ne gender married employed average_response treatment if in_set, clean
+		
+		eststo DD_`y_variable': xtreg average_response ib`base_year'.year treatment if in_set == 1, fe robust i(panel)
+		drop total_pop pop_weighted_response total_pop_weighted_response average_response in_set
+	}
+	
+	
+   esttab _all, ///
+			keep(treatment)  ///
+			nonumbers replace compress se r2 scalar("F F-test")  sfmt(%9.3f %9.3f) b(3) starlevels(* 0.10 ** 0.05 *** 0.01)	
+	
 end
 
 program define ResultsPaperOutput
@@ -7047,3 +7159,6 @@ end
 //SummaryStats_intraMA
 
 //Results_Capital
+//Results_Control
+//Results_Nonprofit
+Results_Arts
