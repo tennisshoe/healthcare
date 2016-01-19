@@ -4,7 +4,6 @@
 \usepackage{verbatim}
 \usepackage{amsfonts}
 \usepackage{indentfirst}
-\usepackage[shortlabels]{enumitem}
 \usepackage{graphicx}
 \usepackage{epstopdf}
 \usepackage{float}
@@ -18,6 +17,18 @@
 \addtolength{\textheight}{2cm}
 \addtolength{\voffset}{-1cm}
 
+\renewcommand{\familydefault}{\sfdefault}
+
+\usepackage{titlesec}
+\usepackage{color}
+
+\definecolor{bar}{rgb}{0.471,0.529,0.671}
+\definecolor{sections}{rgb}{0.18,0.259,0.447}
+
+\titleformat{\section}[hang]{\Large\bfseries\color{sections}}{\thesection \hspace{1pt} \textcolor{bar}{|} \hspace{1pt}}{0pt}{\Large\bfseries}
+\titleformat{\subsection}[hang]{\large\bfseries\color{sections}}{}{0pt}{\large\bfseries}
+\titleformat{\subsubsection}[hang]{\normalsize\bfseries\color{sections}}{}{0pt}{\normalsize\bfseries}
+
 \pagestyle{myheadings}
 \markright{\hfill Does Access to Health Insurance Matter for Entrepreneurship? \hfill}
 \title{Does Access to Health Insurance Matter for Entrepreneurship?}
@@ -30,17 +41,8 @@
 \maketitle
 
 \begin{abstract}
-We study the effect of improved access to health insurance on entrepreneurial rates across industries. We use the 2006 reform of the Massachusetts health care market as our shock. In contrast to previous research, we use our shock to test which kinds of startups were more likely to be created in addition to whether individuals became more likely to become entrepreneurs.  We develop a theoretical model uses institutional heterogeneity to make predictions on how the reform should affect the distribution of entrepreneurs across industries. We see evidence that although non-profit entrepreneurship was significantly affected, overall entrepreneurship is constrained by factors other than access to health care. \footnote{We would like to thank Scott Stern for his advice and guidance on this research project. We are also very appreciative of the helpful suggestions and comments provided by David Autor, Pierre Azoulay, Bill Goulding, Glenn Ellison, Daniel Fehder, Jorge Guzman, Neil Thompson, Heidi Williams and Samantha Zyontz. Any errors are our responsibility. }
+We study the effect of improved access to health insurance on entrepreneurship and measure the quality of those newly created firms. We use the 2006 reform of the Massachusetts health care market as our shock. In contrast to previous research, we use our shock to test which kinds of startups were more likely to be created in addition to whether individuals became more likely to become entrepreneurs.  We develop a theoretical model uses institutional heterogeneity to make predictions on how the reform should affect the distribution of entrepreneurs across industries. We see evidence that although non-profit entrepreneurship was significantly affected, overall entrepreneurship is constrained by factors other than access to health care. We also provide evidence that the quality of non-profits created by the shock may be low, suggesting that even if access health insurance matters for entrepreneurship, it may not matter for the kind of entrepreneurship that most benefits society. \footnote{We would like to thank Scott Stern for his advice and guidance on this research project. We are also very appreciative of the helpful suggestions and comments provided by David Autor, Pierre Azoulay, Bill Goulding, Glenn Ellison, Daniel Fehder, Jorge Guzman, Neil Thompson, Heidi Williams and Samantha Zyontz. Any errors are our responsibility. }
 \end{abstract}
-
-\subsection*{Feedback Requests}
-
-\begin{itemize}
-	\item What audience should the paper target?
-	\item How to strengthen paper's appeal to that audience?
-	\item Where I can read to better understand inference on matching in a diff-and-diff setting help me select a better matching method? View matching as applying function f() onto data's \{Y,X\} observations, generating \{Y',X'\}. Intuitively I want to use delta method on f(\{Y,X\}) for inference but feel like I'm currently using linear \{Y',X'\} based inference. 
-\end{itemize}
-
 
 \section{Introduction}
 Traditionally health insurance in the US has been tied to employment through group plans. In 2013, only 17\% of Americans with private insurance\footnote{Non-private insurance is composed of Medicare, Medicaid and military health care} obtained it through the individual market \citep{smith2014health}. The differences between group and individual insurance are material for entrepreneurs leaving employment to start their own firms. Those that need coverage on the individual market face higher premiums or even the inability to purchase health insurance \citep{pollitz2001accessible}. Uncertainty is also greater on the individual market; it is more likely for a person with an individual plan to lose insurance than someone under a group plan \citep{pauly2008risky}. 
@@ -58,9 +60,9 @@ We are not aware of research asking the complementary question of what potential
 \end{quote}
 The above quote suggests we will see an effect in single person consulting companies but not in high growth startups. More generally, the impact of health care reform may vary by type of firm and not just by demographic of entrepreneur. 
 
-In this paper we contribute to the literature in two ways. First, we show by example that using heterogeneity in firm characteristics can increase our ability to produce significant results in otherwise challenging quasi-experimental settings. Second, our example results are interesting in their own right; they broaden our understanding of what influences the rate of entrepreneurship. 
+In this paper we contribute to the literature in two ways. First, we show by example that using heterogeneity in firm characteristics can increase our ability to produce significant results in otherwise challenging quasi-experimental settings. Second, we test whether policy levers that increase entrepreneurship result in the positive outcomes generally associated with entrepreneurial activity. 
 
-Specifically, we take advantage of variation in the two requirements for entrepreneurship called out in the above quote: drive and capital. We use a firm's tax status to generate insights about drive; higher tax rates should reduce overall incentives to start firms and therefore mitigate entrepreneurial drive. We also develop a theoretical model that shows how start-up capital requirements can inform us about whether entrepreneurs are in fact constrained by access to health care. Our results suggest that while health care reform may provide marginal benefits to general entrepreneurship and stronger benefits to non-profit entrepreneurship, in general health care is not a effective policy lever to influence the level of entrepreneurship in an economy.
+Specifically, we take advantage of variation in the two requirements for entrepreneurship called out in the above quote: drive and capital. We use a firm's tax status to generate insights about drive; higher tax rates should reduce overall incentives to start firms and therefore mitigate entrepreneurial drive. We also develop a theoretical model that shows how start-up capital requirements can inform us about whether entrepreneurs are in fact constrained by access to health care. Our results suggest that while health care reform may provide marginal benefits to general entrepreneurship and stronger benefits to non-profit entrepreneurship, in general health care is not a effective policy lever to influence the level of entrepreneurship in an economy. In addition, the marginal firm created by a policy change may be of lower quality than the average entrepreneurial firm.
 
 The rest of the article proceeds as follows. Section \ref{sec:review} reviews our current knowledge on the importance of both access to health care and entrepreneurship. Section \ref{sec:reform} describes the Massachusetts health reform we use as a policy shock. Section \ref{sec:model} outlines a model that considers how the reform should heterogeneously affect entrepreneurship by industry. Section \ref{sec:data} describes the data sources we use in our analysis. Section \ref{sec:regression} explains our empirical approach. Section \ref{sec:results} presents the effects of the reform on entrepreneurship and Section \ref{sec:conclude} concludes. 
 
@@ -85,6 +87,8 @@ Our first example of using firm characteristics relies on the contrast in tax tr
 Our second example of firm characteristics relies on the consensus that many entrepreneurs are in fact constrained by the lack of access to capital. Evans and Jovanovic \citep{evans1989estimated} is one of the early works that tied wealth to higher entrepreneurial rates. Holtz-Eakin et al. \citep{holtz1994entrepreneurial} use inheritance size as way to further explore capital constraints on entrepreneurship; they find the probability of entrepreneurship and amount of capital used in the firm to increase with inheritance size. More recent work also using inheritances by Hurst and Lusardi \citep{hurst2004liquidity} confirms the positive relationship between wealth and entry. 
 
 We apply this approach of using firm characteristics to the Massachusetts reform of 2006. We believe the setting is appropriate because prior work on health outcomes have provided evidence that the policy change has made a real impact on the health insurance market in Massachusetts. Toussaint et al. \citep{toussaint2014effect} find uninsurance rates dropped in trauma centers. Miller \citep{miller2012effect} shows non-urgent ER visits dropped after the reform. As mentioned above, our setting has also led to conflicting estimates on entrepreneurial impact by different authors. We believe our approach is especially helpful in these kinds of settings with ambiguous results. 
+
+Our finding on the broader societal impact of firms created by entrepreneurial policy levers addresses a gap within the exiting literature. Work on the aggregate affects of entrepreneurship  \citep{haltiwanger2013creates} informs us about how entrepreneurship relates to broader outcomes like employment rates as well as how the role of entrepreneurship is changing over time. Another set of research investigates the firm specific outcomes of new enterprises created by policy shocks, by for example measuring the return to capital across new firms created through a microlending program \citep{de2008returns}. We connect these two streams of research by measuring the societal outcomes of the new firms created by a policy shock. 
 
 \section{Reform in Massachusetts}
 \label{sec:reform}
@@ -123,7 +127,7 @@ We want to be clear that the treatment effect we are estimating is improved acce
 
 Massachusetts historically had a low rate of uninsured residents relative to the rest of the United States. Between 1999 and 2006, Census CPS estimates the Massachusetts had on average a 9.4\% uninsured rate. The US as a whole had an average 14.7\% rate over the same time period. As a result, we think the state of Massachusetts is a relatively strong setting to test our hypotheses; potential entrepreneurs were more likely to face a real choice to give up their current health insurance coverage in order to start firms. In a state like Texas with a 23.6\% uninsured rate, there are likely to be more potential entrepreneurs that lack insurance prior to starting their firms so we would have a weaker instrument to measure our desired effect. 
 
-Simultaneity is a concern in our setting. We can imagine there exists both a supply of individuals willing to become an entrepreneur as well as a demand for entrepreneurs in the form of opportunities for entrepreneurship. We assume the health care reforms have a minor impact on opportunities for entrepreneurship outside of the health care industry in our analysis. The assumption would be false if for example the health reform freed up enough disposable income to significantly increase spending on restaurants. Holding our assumption enables us to identify how the health care law changes the supply of entrepreneurship. 
+Simultaneity is a concern in our setting. We can imagine there exists both a supply of individuals willing to become an entrepreneur as well as a demand for entrepreneurs in the form of opportunities for entrepreneurship. We assume the health care reforms have a minor impact on opportunities for entrepreneurship outside of the health care industry in our analysis. The assumption would be false if for example the health reform freed up enough disposable income to significantly increase spending on restaurants. Holding our assumption enables us to identify how the health care law changes the supply of entrepreneurship. We therefore remove observations of outcomes on the health care industry from our analysis. 
 
 \begin{comment}
 
@@ -241,6 +245,8 @@ Table \ref{tab:basic} provides summary statistics for our variables of interest 
 
 In order to measure the effect of the health care reform on entrepreneurship, ideally we would want to measure change in probability that an individual becomes an entrepreneur. Given that our dataset that lacks observations of individuals, we focus on the changes in our variables of interest. For our first proposition, we measure this as the change in percentage of self-employed people per county ($Change_{ct}$). For our other propositions, we measure the change in non-employed establishments per million people in each county ($Change_{cit}$) by industry. The large number of 4 digit NAICS classifications causes us to use the million people denominator; simple percentages would lead to coefficients that become cumbersome to read. 
 
+For our non-profit analysis we use data from the National Endowment for the Arts (NEA)\nocite{NEA2015}. As part of the US Census Current Population Survey (CPS), the NEA sponsors a Survey of Public Participation in the Arts (SPPA) where a random portion of CPS respondents are asked questions such as whether they had attended a live jazz performance in the last twelve months. The SPPA survey is not conducted on an annual basis; we use data from 2002, 2008 and 2012. The SPPA survey provides state level geographic variation in the results. 
+
 \begin{comment}
 
 This differs from the more common usage of percentage of self-employed in a given sub-population. We do not think the percentage approach is applicable in our case because we expand beyond self-employed workers to consider the count of firms; we believe the number of firms per million people has a more intuitive interpretation than the percentage of firms in a population of people.
@@ -303,8 +309,8 @@ Finally, we use the 2012 Economic Census Industry Series for information about t
 \subsection{Overall Impact}
 
 Proposition 1 suggests we should see an increase in entrepreneurial activity after the health care reform. To test this prediction, we first apply a difference in differences approach with counties in Massachusetts as the treatment group and various controls. If the reform improved the return to entrepreneurship for some workers, our treatment indicator should be positive. 
-\begin{align}
-Change_{cst} = \alpha_c + \zeta_s + \delta_t + \beta \, \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{cst}
+\begin{align} \label{eq:overall}
+Change_{cst} = \alpha_c + \zeta_s + \delta_t + \beta  \times \mathbf{1}\{\text{county in MA}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{cst}
 \end{align}
 
 Here $Change_{cst}$ represents the change in our variable of interest per million residents in year $t$ and county $c$ of state $s$. The model includes fixed effects for year ($\delta$), county ($\alpha$) and state ($\zeta$).
@@ -313,7 +319,9 @@ Our first control consists of counties in New England outside of Massachusetts. 
 
 For a more targeted approach, we use border matching as our second control. Here our treatment group consists of Massachusetts counties that share a border with another state. This pulls out the cities of Boston and Cambridge. Our control group consists of counties in Connecticut, New Hampshire, Rhode Island, Vermont and New York that border Massachusetts. We would expect this method to help ensure our control and treatment groups are similar if geographically close counties  have for example more similar economic activity than distant counties. 
 
-Finally we employ a synthetic control method drawing on counties across all US states other than Massachusetts. Our approach mirrors the procedure used in Abadie et al. \citep{abadie2010synthetic} although we slightly modify their source code to better account for rounding errors in our specific use case. For each county in Massachusetts we generate a synthetic pair as a control. We first prune the matching pool by removing counties that strongly differ from the Massachusetts county in either level of urbanization, uninsured rate, population age, or the frequency of children in a household. We then assign weights to the pruned set of counties in order to minimize the difference in our outcome variable between control and treatment before our shock. This has the benefit of removing any pre-trend from our natural experiment as seen in Figure \ref{fig:state_contrast}. The downside is that the matching is done algorithmically and may produce counterintuitive controls. In our case the procedure yielded arguably valid results; self-employment rates in Boston (Suffolk County, MA) before 2008 most closely matched a combination the counties for Ann Arbor, MI (57\% weight), Lexington, KY (25\% weight) and other various counties across the US. 
+Finally we employ a synthetic control method drawing on counties across all US states other than Massachusetts. Our approach mirrors the procedure used in Abadie et al. \citep{abadie2010synthetic} although we slightly modify their source code to better account for rounding errors in our specific use case. In contrast to other matching methods such as coarsened exact matching or propensity score matching, the approach we take allows us to match fairly well on both observables and pretend given the limited pool of potential controls in our dataset. 
+
+For each county in Massachusetts we generate a synthetic pair as a control. We first prune the matching pool by removing counties that strongly differ from the Massachusetts county in a set of observables: the level of urbanization, uninsured rate, population age, and the frequency of children in a household. We then assign weights to the pruned set of counties in order to minimize the difference in our outcome variable between control and treatment before our shock. This has the benefit of removing any pre-trend from our natural experiment as seen in Figure \ref{fig:state_contrast}. . The downside is that the matching is done algorithmically and may produce counterintuitive controls. In our case the procedure yielded arguably valid results; self-employment rates in Boston (Suffolk County, MA) before 2008 most closely matched a combination the counties for Ann Arbor, MI (57\% weight), Lexington, KY (25\% weight) and other various counties across the US. 
 
 \begin{figure}[H]
 	\centering
@@ -358,33 +366,40 @@ Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_
 \end{align}
 
 \end{comment}
-\begin{align}
+\begin{align} \label{eq:non_profit_dd}
 Change_{cit} = \alpha_c + \gamma_i + \delta_t + \beta \times \{\text{\% of industry non-profit}\} \cdot \mathbf{1}\{\text{year > 2007}\} + \epsilon_{ct}
 \end{align}
 
-Here $Change_{cit}$ represents the number of net new establishments created per million residents in year $t$, county $c$ and industry $i$. The model includes fixed effects for year ($\delta$), county ($\alpha$) and industry ($\gamma$). Although our observations are based on NAICS codes at the 4 digit level, we apply fixed effect $\gamma$ at the 2 digit NAICS code level in order to have a manageable number of coefficients to estimate given the constraints of our data set. Since our self-employment data set lacks industry information we only apply model (2) to our non-employer data set. 
+Here $Change_{cit}$ represents the number of net new establishments created per million residents in year $t$, county $c$ and industry $i$. The model includes fixed effects for year ($\delta$), county ($\alpha$) and industry ($\gamma$). Although our observations are based on NAICS codes at the 4 digit level, we apply fixed effect $\gamma$ at the 3 digit NAICS code level in order to have a manageable number of coefficients to estimate given the constraints of our data set. Since our self-employment data set lacks industry information we only apply model (\ref{eq:non_profit_dd}) to our non-employer data set. 
 
-Model (2) leaves open the possibility of another shock happening at the same time that also differentially affected non-profit industries. The results would be invalid if for example the 2008 recession was relatively milder for non-profit firms than for for-profit firms. To control for this, we extend our approach to a triple difference model which should account for shocks that both affected Massachusetts and our synthetic control. 
-\begin{align}
+Model (\ref{eq:non_profit_dd}) leaves open the possibility of another shock happening at the same time that also differentially affected non-profit industries. The results would be invalid if for example the 2008 recession was relatively milder for non-profit firms than for for-profit firms. To control for this, we extend our approach to a triple difference model which should account for shocks that both affected Massachusetts and our synthetic control. 
+\begin{align} \label{eq:non_profit_ddd}
 Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
 & + \beta  \times \{\text{\% of industry non-profit}\} \cdot \mathbf{1}\{\text{year > 2007}\}  \cdot \mathbf{1}\{\text{county in  MA}\} \nonumber  \\
 & + \epsilon_{ict}
 \end{align}
 
+Although models (\ref{eq:non_profit_dd}) and (\ref{eq:non_profit_ddd}) can provide us with evidence of an increases in entrepreneurial activity within these industries, they do no not give insight about the quality of firms being created. To answer the quality question, we need to consider broader outcomes potentially affected by the new firms. In our data set, industries where non-profits comprise a large proportion of firms are related to the arts. Examples include museums (NAICS code 7121) and performing arts (NAICS code 7111). We therefore use the SPPA data on arts attendance to test the quality of new firms created by the health care shock. An increase in arts attendance after the shock could be interpreted as evidence that the new non-profits are having an impact on their communities. 
 
+We use the state level difference and diffence model (\ref{eq:arts}) to test this outcome
+\begin{align} \label{eq:arts}
+Attended_{ist} = \alpha_s + \delta_t + \beta  \times \mathbf{1}\{\text{state = MA}\} \cdot \mathbf{1}\{\text{year = 2012}\} + \epsilon_{ist}
+\end{align}
+
+$Attended_{ist}$ is an indicator set to one if the respondent attended a type of cultural event in the past twelve months. The SPPA contains data about jazz, classical and general musical performances, operatic and traditional plays, ballet and general dance performances, as well as museum and park attendance. $\alpha_s$ is a fixed effect for states; we restrict our sample to states in New England. $\delta_t$ is a time fixed effect. Our data includes the years 2002, 2008 and 2012. $\beta$ is our treatment indicator which is set to one for Massachusetts in 2012. Since our health care shock affects entrepreneurship starting in 2008, we expect attendance outcomes to be influenced after 2008. 
 
 \subsection{Capital Requirement Heterogeneity}
 
-Proposition 3 states that as long as opportunities for low capital entrepreneurship are at least as prevalent as opportunities for high capital entrepreneurship, we should see that the health insurance shock increased low capital entrepreneurship relative to high capital entrepreneurship. We first test this proposition using model (4) within Massachusetts. 
-\begin{align}
+Proposition 3 states that as long as opportunities for low capital entrepreneurship are at least as prevalent as opportunities for high capital entrepreneurship, we should see that the health insurance shock increased low capital entrepreneurship relative to high capital entrepreneurship. We first test this proposition using model (\ref{eq:capital_dd}) within Massachusetts. 
+\begin{align} \label{eq:capital_dd}
 Change_{cit} =  \alpha_c + \gamma_i+ \delta_t + \beta \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year >= 2008}\} + \epsilon_{ict}
 \end{align}
 Our observation count of industries across counties is large enough for us to deploy industry fixed effects $\gamma$ at the 4 digit NAICS code level. 
 
 We use the Survey of Business Owners (SBO) Public Use Microdata Sample (PUMS) from 2007 to determine which industries have low capital requirements. Since the SBO PUMS data only reports on 2 digit NAICS codes, we calculate the percentage of businesses that required less than \$1000 of startup capital for each 2 digit NAICS code and match the 2 digit NAICS codes with our 4 digit industry codes. Because we lack resolution of our treatment at the 4 digit industry code level, we avoid treatment intensity here in contrast to our non-profit approach. We consider industries above the middle of the range of percentages as low capital industries. The PUMS data provides the capital requirements by employment size so we customize our calculation of low capital industries for firms with no employees. 
 
-Model (4) leaves open the possibility of another shock happening at the same time that also differentially affected low capital industries. We therefore include the triple difference model (5). 
-\begin{align}
+Model (\ref{eq:capital_dd}) leaves open the possibility of another shock happening at the same time that also differentially affected low capital industries. We therefore include the triple difference model (\ref{eq:capital_ddd}). 
+\begin{align} \label{eq:capital_ddd}
 Change_{cit} = & \; \gamma_i \cdot \alpha_c + \gamma_i \cdot \delta_t +  \alpha_c \cdot \delta_t \nonumber   \\
 & + \beta \, \mathbf{1}\{\text{low capital industry}\} \cdot \mathbf{1}\{\text{year >= 2008}\}  \cdot \mathbf{1}\{\text{county in MA}\} \nonumber  \\
 & + \epsilon_{cit}
@@ -432,14 +447,14 @@ Unfortunately our theory does not provide a clear mechanism for determining what
 
 Fixed effects with errors clustered by state is the usual approach to inference when dealing with state wide shocks. However as pointed out by Donald and Lang \citep{donald2007inference}, inference with a small number of cluster groups can suffer from large bias. In our New England control specification we only have 5 groups. We also have limited observations per group; each New England state just has 11 counties on average so the two-step approach suggested by Donald and Lang does not apply. In addition, our shock only applies to a single state cluster leading to a singular covariance matrix under our modeling specification; see Appendix B for an illustration with a simple linear model and an example of how our confidence intervals may become too small when clustering by state. 
 
-To address these concerns, we use a Monte-Carlo simulation described in Appendix C to test various inference approaches conditional on the properties of our dataset. As a result, we report confidence intervals based on Huber-White errors clustered at the county level. 
+To address these concerns, we use a Monte-Carlo simulation described in Appendix C to test various inference approaches conditional on the properties of our dataset. As a result, we report confidence intervals based on Huber-White errors clustered at the county level for model (\ref{eq:overall}) under a fixed effects estimator. In our models that include industry fixed effects, we cluster at the county $\times$ industry level to ensure we can identify those fixed effects. For model (\ref{eq:arts}), we use a jackknife procedure supported by the structure of the SPPA dataset.  
 
 \section{Findings}
 \label{sec:results}
 
 \subsection{Importance of Control Group}
 
-Table \ref{tab:control} summarizes our first finding as a test of Proposition 1. We run the difference in difference model (1) against the yearly percentage change in self employed population. Over our period of interest, about 3.29\% of Massachusetts' population was unincorporated, self employed individuals. Our column 1 result suggests the percentage of self-employed residents increased by 0.08 per year as a result of health care reform, for an overall increase of 0.4\% by the end of our period of interest. This result compares well to the Becker and Tuzemen \citep{tuzemen2014self} result of 0.6\% which measured the impact of the same shock on self employment using an IV approach on aggregate state data. 
+Table \ref{tab:control} summarizes our first finding as a test of Proposition 1. We run the difference in difference model (\ref{eq:overall}) against the yearly percentage change in self employed population. Over our period of interest, about 3.29\% of Massachusetts' population was unincorporated, self employed individuals. Our column 1 result suggests the percentage of self-employed residents increased by 0.08 per year as a result of health care reform, for an overall increase of 0.4\% by the end of our period of interest. This result compares well to the Becker and Tuzemen \citep{tuzemen2014self} result of 0.6\% which measured the impact of the same shock on self employment using an IV approach on aggregate state data. 
 
 However we find the magnitude of our results to be sensitive to the control group in use. Column 2 uses the border county procedure to attempt a closer match between our treatment and control groups. Column 3 uses the synthetic control group process. Both results in similar standard errors but magnitudes that are not distinguishable from zero. 
 \begin{center}
@@ -464,14 +479,14 @@ We interpret these findings to mean any possible effect our shock had on self-em
 
 \subsection{Impact on Non-Profits}
 
-Table \ref{tab:nonprofit} shows our results testing Proposition 2 claim that non-profit firm creation should increase faster than for-profit firm creation. Column 1's results from running model (2) suggests a noticeable effect, which remains once we apply the triple difference specified in model (3) with the New England and synthetic controls. Although our estimate under border control loses its significance, we believe the is an artifact of poor matching; services such as homeless shelters appear in our dataset for Massachuetts border counties but not in the border control group. 
+Table \ref{tab:nonprofit} shows our results testing Proposition 2 claim that non-profit firm creation should increase faster than for-profit firm creation. Column 1's results from running model (\ref{eq:non_profit_dd}) suggests a noticeable effect, which remains once we apply the triple difference specified in model (\ref{eq:non_profit_ddd}) with the New England and synthetic controls. Although our estimate under border control loses its significance, we believe the is an artifact of poor matching; services such as homeless shelters appear in our dataset for Massachuetts border counties but not in the border control group. 
 
-The magnitude of our observed effect is large. Our estimate suggests that an industry composed only of non-profits would gain about 45 new firms per million people each year relative to an industry composed only of for-profit firms. To contrast, our dataset shows on average 13 new firms were created per million people each year for a typical industry. 
+The magnitude of our observed effect is large. Our estimate suggests that an industry composed only of non-profits would gain about 70 new firms per million people each year relative to an industry composed only of for-profit firms. To contrast, our dataset shows on average 13 new firms were created per million people each year for a typical industry. 
 
 \begin{table}[H]
 	\footnotesize
 	\centering
-	\caption{Impact of health reform on non-profit non-employers}
+	\caption{New non-profits per million people created by health reform}
 	\input{resources/nonprofit.tex}
 	\label{tab:nonprofit}
 \end{table}
@@ -486,27 +501,30 @@ The magnitude of our observed effect is large. Our estimate suggests that an ind
 \multicolumn{5}{l}{\footnotesize \space 2000 to 2012 with treatment after 2007 and treatment intensity equal to percentage of non-profit}\\ 
 \multicolumn{5}{l}{\footnotesize \space firms within industry.}\\ 
 \multicolumn{5}{l}{\footnotesize Non-profit industries defined by 4 digit NAICS codes where over half of firms were tax-exempt }\\
-\multicolumn{5}{l}{\footnotesize  \space according to 2007 Economic Census data. 2 digit NAICS groupings used as fixed effects to}\\
+\multicolumn{5}{l}{\footnotesize  \space according to 2007 Economic Census data. 3 digit NAICS groupings used as fixed effects to}\\
 \multicolumn{5}{l}{\footnotesize  \space permit identification.}\\
 \multicolumn{5}{l}{\footnotesize Maine, Connecticut, Vermont, Rhode Island and New Hampshire used as controls in column (2) }\\
 \multicolumn{5}{l}{\footnotesize \space under triple diff model. }\\
 \multicolumn{5}{l}{\footnotesize Column (3) restricts the dataset to counties that border other states across Massachusetts, }\\
-\multicolumn{5}{l}{\footnotesize \space Connecticut, Vermont, Rhode Island, New Hampshire and New York. Industries that only}\\
-\multicolumn{5}{l}{\footnotesize \space  exist in treatment group are dropped. }\\
+\multicolumn{5}{l}{\footnotesize \space Connecticut, Vermont, Rhode Island, New Hampshire and New York.}\\
 \multicolumn{5}{l}{\footnotesize Column (4) uses a synthetic control model that matches each Massachuetts industry by county }\\
 \multicolumn{5}{l}{\footnotesize \space pre-trend against US counties with similar income, age, urban and insurance rate characteristics. }\\
 
-\begin{table}[H]
-	\centering
-	\input{resources/nonprofit.tex}
-	\caption{Impact of health reform on non-profit entrepreneurship}
-\end{table}
-
 \end{comment}
+
+Given the large effect on new firm creation, we would expect to see some impact on non-profit outcomes if those new firms were of high quality. Table \ref{tab:arts} summarizes our results. We see no significant affect across all of our measures of attendance. The marginal non-profit generated by our shock had little impact on outcomes which the quality of non-profits created by the health insurance shock was slow. 
+
+\begin{table}[H]
+	\footnotesize
+	\centering
+	\caption{Percenatge change in arts attendence from new non-profit creation}
+	\input{resources/arts_binary.tex}
+	\label{tab:arts}
+\end{table}
 
 \subsection{Entrepreneurship Unconstrained by Health Care}
 
-Table \ref{tab:capital_ne} summarizes the results of testing Proposition 3 using our dataset of non-employing establishments. Column 1 uses the difference in difference estimator of model (4) to show overall low capital industries grew slower than high capital industries after our shock. Although as in our Table \ref{tab:control} self-employment results our point estimates attenuate as we apply various controls, our results here remain statistically significant across all control specifications. Our theory predicts a negative or zero result if opportunities for low capital firms were somehow constrained by other factors. In other words, our results suggest that entrepreneurship in Massachusetts is blocked by something other than the lack access to health insurance. 
+Table \ref{tab:capital_ne} summarizes the results of testing Proposition 3 using our dataset of non-employing establishments. Column 1 uses the difference in difference estimator of model (\ref{eq:capital_dd}) to show overall low capital industries grew slower than high capital industries after our shock. Columns 2 to 4 provide the triple difference estimator results under model (\ref{eq:capital_ddd}). Our theory predicts a negative or zero result if opportunities for low capital firms were somehow constrained by other factors. Our results suggest that entrepreneurship in Massachusetts is blocked by something other than the lack access to health insurance. 
 
 
 \begin{comment}
@@ -569,7 +587,8 @@ We next turn to Proposition 4 which provides us with more statistical accuracy i
 \multicolumn{5}{l}{\footnotesize Maine, Connecticut, Vermont, Rhode Island and New Hampshire used as controls in column (2) }\\
 \multicolumn{5}{l}{\footnotesize \space under triple diff model. }\\
 \multicolumn{5}{l}{\footnotesize Column (3) restricts the dataset to counties that border other states across Massachusetts, }\\
-\multicolumn{5}{l}{\footnotesize \space Connecticut, Vermont, Rhode Island, New Hampshire and New York. }\\
+\multicolumn{5}{l}{\footnotesize \space Connecticut, Vermont, Rhode Island, New Hampshire and New York. 3 digit NAICS level used }\\
+\multicolumn{5}{l}{\footnotesize \space for industry fixed effects to enable full fixed effect identification. }\\
 \multicolumn{5}{l}{\footnotesize Column (4) uses a synthetic control model that matches each Massachuetts industry by county }\\
 \multicolumn{5}{l}{\footnotesize \space pre-trend against US counties with similar income, age, urban and insurance rate characteristics. }\\
 
@@ -587,13 +606,15 @@ We next turn to Proposition 4 which provides us with more statistical accuracy i
 
 We have used the 2006 policy change in Massachusetts as a shock to better understand the relationship between entrepreneurship and access to health insurance. We have tested a number of theories suggesting entrepreneurship rates would increase overall and differentially within non-profit and low capital industries. 
 
-Our first result was to show that previous results suggesting a positive overall relationship may have be an artifact of poor control design. Our analysis estimated a statistically significant increase in self-employment when we used the rest of New England as a control. However the significance disappeared under both a county border matching strategy and a synthetic control strategy. Many of the high tech industries clustered around the Kendell Square in Cambridge, MA may not be adequately represented in the rest of New England. These kinds of regional variations may be causing the inconsistencies in our estimates when we vary our control design. 
+Our first result was to show that previous results suggesting a positive overall relationship may have be an artifact of control design. Our analysis estimated a statistically significant increase in self-employment when we used the rest of New England as a control. However the significance disappeared under both a county border matching strategy and a synthetic control strategy. This may be due to for example many of the high tech industries clustered around Kendell Square in Cambridge, MA not being adequately represented in the rest of New England. These kinds of regional variations may be causing the inconsistencies in our estimates when we vary our control design. 
 
 Our second result addresses whether the policy shock's short term benefits of improved access to health care is counterbalanced by entrepreneurial concerns of higher future taxes to pay for those benefits. Our results support this hypothesis. Previous literature  has consistently shown a negative relationship between tax rates and entrepreneurship; here we provide evidence expectations about future taxes can also change entry rates. We are however hesitant to conclude that changes in tax expectations mitigate the entrepreneurial benefits of health insurance reform. Our theoretical model assumed that the utility costs of health insurance were the same between entrepreneurs deciding to start non-profit and for-profit firms. We can imagine selection issues invaliding that assumption if for example entrepreneurs starting non-profit firms are less likely to have access to health insurance through an employed spouse. 
 
+Our third result complements the estimate of increased non-profit activity by measuring how broader outcomes changed in Massachusetts relative to other New England states. The industries with high non-profit activity involved performing arts or museums. We used SPPA data to test whether resident participation in cultural activities changed as a result of the increased entrepreneurship. Our results show no change, suggesting the increased entrepreneurial activity was not meaningful in a broader sense. 
+
 Our final result connects the entrepreneurial health insurance question to capital constraints. We have the unexpected finding that capital intensive industries fared better than low capital industries. Our theory shows this could only be the case if there were significantly more new opportunities in high capital industries relative to low capital industries as a result of the shock. We interpret these findings as saying activities such as freelancing that require low capital are constrained by factors other than access to health insurance. As our quoted Kendell Square entrepreneur suggests, it seems the lack of health care is not stopping entrepreneurs from pursuing their business ideas. 
 
-Our overall contribution consists not only of the individual results themselves but also a new approach to analyze shocks to entrepreneurship. We believe using heterogeneity in new firm characteristics will be useful for entrepreneurial scholars studying health insurance as well as other potential barriers to entrepreneurship. 
+Our overall contribution consists not only of the individual results themselves but also a new approach to analyze shocks to entrepreneurship. We believe using heterogeneity in new firm characteristics will be useful for entrepreneurial scholars studying health insurance as well as other potential barriers to entrepreneurship. We also think connecting shocks to broader outcomes can provide meaningful insights on how entrepreneurial activity affects the wider economy. 
 
 \begin{comment}
 
@@ -775,6 +796,26 @@ X_i^{-t} \\  X_i^t
 
 We observe that in the inner summation when $g \ne g^t$ we are adding matrices with zero's in the last column and row since $X^t_i$ will be zero. When $g = g^t$, from above we know the group's residual is zero by construction so we have a zero matrix. Therefore the inner matrix must be singular which implies the covariance matrix is also singular. 
 
+To illustrate the inference challenge when using a small number of groups, we recreate Table \ref{tab:control} below using state rather than county clustering as Table \ref{tab:control_state}. In contrast to our preferred specification, we see that our confidence intervals are far smaller. 
+
+\begin{center}
+	\begin{table}[H]
+		\centering
+		\caption{Diff-in-diff estimator of yearly percentage change in self-employment} 
+		\input{resources/prop1_control_state_diff_se_pop.tex}	
+		\label{tab:control_state}
+	\end{table}		
+\end{center}
+\begin{comment}
+\multicolumn{4}{l}{\footnotesize Huber-White errors clustered at the state level in parentheses}\\
+\multicolumn{4}{l}{\footnotesize * p<0.10, ** p<0.05, *** p<0.01}\\
+\multicolumn{4}{l}{\footnotesize Diff-in-diff model of health care reform from 2000 to 2012 with Massachusetts treated after 2007. }\\
+\multicolumn{4}{l}{\footnotesize Maine, Connecticut, Vermont, Rhode Island and New Hampshire used as controls in column (1). }\\
+\multicolumn{4}{l}{\footnotesize Column (3) uses a synthetic control model that matches each Massachuetts county pre-trend against}\\
+\multicolumn{4}{l}{\footnotesize \space US counties with similar income, age, urban and insurance rate characteristics. }\\
+s. 
+\end{comment}
+
 \subsection*{Appendix C}
 
 In order to construct confidence intervals given the issues with our small group size, we first use a monte-carlo simulation to test various approaches. Our data generating process is based on a modifided version of model (1) allowing for auto-correlated residuals and state level shocks. 
@@ -869,26 +910,6 @@ Results for the model (\ref{eq:mc_state}) data generating process are given in T
 	\end{tabular}	
 	\label{tab:mc_state}
 \end{table}
-
-To illustrate the inference challenge when using a small number of groups, we recreate Table \ref{tab:control} below using state rather than county clustering. In contrast to our preferred specification, we see that our confidence intervals are far smaller. 
-
-\begin{center}
-	\begin{table}[H]
-		\centering
-			\caption{Diff-in-diff estimator of yearly percentage change in self-employment} 
-		\input{resources/prop1_control_state_diff_se_pop.tex}	
-		\label{tab:control_state}
-	\end{table}		
-\end{center}
-\begin{comment}
-\multicolumn{4}{l}{\footnotesize Huber-White errors clustered at the state level in parentheses}\\
-\multicolumn{4}{l}{\footnotesize * p<0.10, ** p<0.05, *** p<0.01}\\
-\multicolumn{4}{l}{\footnotesize Diff-in-diff model of health care reform from 2000 to 2012 with Massachusetts treated after 2007. }\\
-\multicolumn{4}{l}{\footnotesize Maine, Connecticut, Vermont, Rhode Island and New Hampshire used as controls in column (1). }\\
-\multicolumn{4}{l}{\footnotesize Column (3) uses a synthetic control model that matches each Massachuetts county pre-trend against}\\
-\multicolumn{4}{l}{\footnotesize \space US counties with similar income, age, urban and insurance rate characteristics. }\\
-s. 
-\end{comment}
 
 \begin{comment}
 
